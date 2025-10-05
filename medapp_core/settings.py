@@ -31,12 +31,15 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # Django defaults
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
+=======
     'accounts',
     'hospitals',
     'doctors',
@@ -49,7 +52,12 @@ INSTALLED_APPS = [
     'adminpanel',
     'mlmodule',
 ]
+>>>>>>> c2964e7b5b0ed455c7815880f93816697ebbda66
 
+    # your app
+    'core',
+]
+AUTH_USER_MODEL = 'core.User'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

@@ -1,14 +1,21 @@
-# prescriptions app — Developer docs
+# Prescriptions App
 
-## Overview
-Manages prescriptions (create, list, update), medications tied to prescriptions, PDF generation, and storage.
+## Purpose
+Handles creation, listing, and management of prescriptions and medications between doctors and patients.
 
-## Key models
-- `Prescription` — patient, doctor, notes, file, status (draft|final|revoked), summary
-- `Medication` — prescription FK, name, dosage, frequency, duration, quantity, instructions
+## Key Models
+- `Prescription`: Links doctor, patient, and notes.
+- `Medication`: Belongs to a prescription, includes dosage and frequency.
+
+## Key Files
+- `services.py`: Business logic for creating prescriptions.
+- `repositories.py`: Centralized DB queries.
+- `permissions.py`: Role-based access control.
+- `ml_integration.py`: (Not used here, but stub if needed)
 
 ## API
-Register router:
-```py
-# project urls.py
-path("api/", include("prescriptions.urls")),
+- `/prescriptions/`: List prescriptions
+- `/prescriptions/create/`: Create new prescription
+
+## Tests
+- Unit tests for models, services, and views in `tests/`

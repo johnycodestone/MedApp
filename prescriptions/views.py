@@ -1,44 +1,18 @@
-# prescriptions/views.py
-from rest_framework import viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from django.http import HttpResponse, Http404
-from django.db import models as dj_models
+from django.shortcuts import render, get_object_or_404, redirect
 from .models import Prescription
-from .serializers import PrescriptionSerializer
-from .permissions import IsDoctorOrOwner
-from .services import PrescriptionService
+from .forms import PrescriptionForm, MedicationForm
+from .services import create_prescription_with_medications
 
-class PrescriptionViewSet(viewsets.ModelViewSet):
-    """
-    ModelViewSet for Prescription
-    - GET /prescriptions/
-    - POST /prescriptions/
-    - GET/PUT/PATCH/DELETE /prescriptions/{id}/
-    - GET /prescriptions/{id}/download_pdf/
-    """
-    serializer_class = PrescriptionSerializer
-    permission_classes = [IsAuthenticated, IsDoctorOrOwner]
-    service = PrescriptionService()
+def prescription_list(request):
+    prescriptions = Prescription.objects.filter(patient__user=request.user)
+    return render(request, 'prescriptions/list.html', {'prescriptions': prescriptions})
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
-            return Prescription.objects.all().prefetch_related("medications")
-        return Prescription.objects.filter(dj_models.Q(patient=user) | dj_models.Q(doctor=user)).prefetch_related("medications")
-
-    def perform_create(self, serializer):
-        prescription = serializer.save()
-        # Build & persist summary
-        prescription.summary = self.service._build_summary(prescription)
-        prescription.save(update_fields=["summary"])
-
-    @action(detail=True, methods=["get"], url_path="download_pdf")
-    def download_pdf(self, request, pk=None):
-        prescription = self.get_object()
-        pdf_bytes = self.service.generate_pdf(prescription)
-        if not pdf_bytes:
-            raise Http404("PDF not available")
-        response = HttpResponse(pdf_bytes, content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="prescription_{prescription.id}.pdf"'
-        return response
+def create_prescription(request):
+    if request.method == 'POST':
+        form = PrescriptionForm(request.POST)
+        if form.is_valid():
+            prescription = create_prescription_with_medications(form.cleaned_data, request.user)
+            return redirect('prescriptions:list')
+    else:
+        form = PrescriptionForm()
+    return render(request, 'prescriptions/create.html', {'form': form})

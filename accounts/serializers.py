@@ -4,7 +4,7 @@ accounts/serializers.py
 DRF serializers for user registration, authentication, and profile management.
 Handles validation and data transformation for API endpoints.
 """
-
+from .models import CustomUser
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError

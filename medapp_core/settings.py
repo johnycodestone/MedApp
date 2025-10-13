@@ -38,8 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-<<<<<<< HEAD
-=======
+    'django_extensions',
     'accounts',
     'hospitals',
     'doctors',
@@ -51,12 +50,9 @@ INSTALLED_APPS = [
     'reports',
     'adminpanel',
     'mlmodule',
+    'core',       # For Main DB
 ]
->>>>>>> c2964e7b5b0ed455c7815880f93816697ebbda66
 
-    # your app
-    'core',
-]
 AUTH_USER_MODEL = 'core.User'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -1,13 +1,10 @@
-# appointments/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import AppointmentViewSet
 
-from django.urls import path
-from . import views
-
-# Below are basically our use cases for appointments that we want to access and we do that via URLs.
+router = DefaultRouter()
+router.register(r'', AppointmentViewSet, basename='appointments')  # ✅ Use empty string here
 
 urlpatterns = [
-    path('book/', views.book_appointment_view, name='book_appointment'), # book/ → Patient books an appointment
-    path('cancel/', views.cancel_appointment_view, name='cancel_appointment'), # cancel/ → Cancel an existing appointment
-    path('reschedule/', views.reschedule_appointment_view, name='reschedule_appointment'), # reschedule/ → Change appointment time
-    path('history/', views.appointment_history_view, name='appointment_history'), # history/ → View past and upcoming appointments
+    path('', include(router.urls)),  # ✅ This mounts POST /appointments/
 ]

@@ -1,19 +1,18 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Prescription
+from .forms import PrescriptionForm, MedicationForm
+from .services import create_prescription_with_medications
 
-# Create your views here.
+def prescription_list(request):
+    prescriptions = Prescription.objects.filter(patient__user=request.user)
+    return render(request, 'prescriptions/list.html', {'prescriptions': prescriptions})
 
-# prescriptions/views.py
-
-from django.http import HttpResponse
-
-def create_prescription_view(request):
-    return HttpResponse("Create Prescription Page")
-
-def view_prescription_view(request, prescription_id):
-    return HttpResponse(f"Viewing Prescription {prescription_id}")
-
-def download_prescription_view(request, prescription_id):
-    return HttpResponse(f"Download Prescription {prescription_id}")
-
-def prescription_history_view(request):
-    return HttpResponse("Prescription History Page")
+def create_prescription(request):
+    if request.method == 'POST':
+        form = PrescriptionForm(request.POST)
+        if form.is_valid():
+            prescription = create_prescription_with_medications(form.cleaned_data, request.user)
+            return redirect('prescriptions:list')
+    else:
+        form = PrescriptionForm()
+    return render(request, 'prescriptions/create.html', {'form': form})

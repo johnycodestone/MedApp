@@ -1,13 +1,52 @@
 # adminpanel/urls.py
 
-from django.urls import path
-from . import views
+from django.urls import path, include
+from django.contrib.admin import site
+from rest_framework.routers import DefaultRouter
+from .views import (
+    PatientViewSet,
+    DoctorViewSet,
+    AppointmentViewSet,
+    MedicalRecordViewSet,
+    PrescriptionViewSet,
+    AdminDashboardView
+)
 
-# Below are basically our use cases for adminpanel that we want to access and we do that via URLs.
+# Create a router for API viewsets
+router = DefaultRouter()
+router.register(r'patients', PatientViewSet, basename='patient')
+router.register(r'doctors', DoctorViewSet, basename='doctor')
+router.register(r'appointments', AppointmentViewSet, basename='appointment')
+router.register(r'medical-records', MedicalRecordViewSet, basename='medical-record')
+router.register(r'prescriptions', PrescriptionViewSet, basename='prescription')
 
 urlpatterns = [
-    path('audit-logs/', views.audit_logs_view, name='audit_logs'), # audit-logs/ → View system activity logs
-    path('assign-role/', views.assign_role_view, name='assign_role'), # assign-role/ → Assign roles to users (Doctor, Admin, etc.)
-    path('backup/', views.backup_view, name='backup'), # backup/ → Trigger or view system backups
-    path('version/', views.version_view, name='version_info'), # version/ → Show current system version or changelog
+    # Django Admin Site
+    path('django-admin/', site.urls, name='django-admin'),
+    
+    # Admin Dashboard
+    path('dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
+    
+    # API Routes
+    path('api/', include(router.urls)),
+    
+    # Additional Admin-specific routes
+    path('api/stats/', include([
+        path('patient-count/', views.patient_count_view, name='patient-count'),
+        path('appointment-stats/', views.appointment_stats_view, name='appointment-stats'),
+        path('revenue-summary/', views.revenue_summary_view, name='revenue-summary'),
+    ])),
+    
+    # Authentication Routes
+    path('api/auth/', include([
+        path('login/', views.admin_login_view, name='admin-login'),
+        path('logout/', views.admin_logout_view, name='admin-logout'),
+        path('password-reset/', views.admin_password_reset_view, name='admin-password-reset'),
+    ]))
 ]
+
+# Optional: Custom error handlers for admin views
+handler400 = 'adminpanel.views.bad_request'
+handler403 = 'adminpanel.views.permission_denied'
+handler404 = 'adminpanel.views.page_not_found'
+handler500 = 'adminpanel.views.server_error'

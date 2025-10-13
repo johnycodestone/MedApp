@@ -4,16 +4,16 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 from adminpanel.models import Doctor, Patient
-from schedules.models import ScheduleCategory, Schedule, ScheduleReminder
+from reports.models import ReportCategory, Report, ReportTemplate
 from django.utils import timezone
 from datetime import timedelta
 
 User = get_user_model()
 
-class ScheduleViewsTest(TestCase):
+class ReportsViewsTest(TestCase):
     def setUp(self):
         """
-        Set up test data for schedule views
+        Set up test data for reports views
         """
         # Create test users
         self.admin_user = User.objects.create_superuser(
@@ -46,154 +46,156 @@ class ScheduleViewsTest(TestCase):
         )
         
         # Create test category
-        self.category = ScheduleCategory.objects.create(
+        self.category = ReportCategory.objects.create(
             name='Medical Consultation',
-            description='Regular medical consultation'
+            description='Detailed medical consultation reports',
+            report_type=ReportCategory.ReportType.MEDICAL
         )
         
-        # Create test schedule
-        self.schedule = Schedule.objects.create(
-            title='Heart Check-up',
+        # Create test report
+        self.report = Report.objects.create(
+            title='Heart Check-up Report',
             doctor=self.doctor,
             patient=self.patient,
             category=self.category,
-            start_time=timezone.now() + timedelta(days=1),
-            end_time=timezone.now() + timedelta(days=1, hours=1),
-            status=Schedule.ScheduleStatus.PENDING
+            status=Report.ReportStatus.GENERATED,
+            priority=Report.ReportPriority.MEDIUM,
+            generated_by=self.admin_user,
+            generated_at=timezone.now() - timedelta(hours=1),
+            published_at=timezone.now()
         )
         
-        # Create test reminder
-        self.reminder = ScheduleReminder.objects.create(
-            schedule=self.schedule,
-            reminder_type=ScheduleReminder.ReminderType.EMAIL,
-            send_time=timezone.now() + timedelta(days=1),
-            is_sent=False
+        # Create test report template
+        self.template = ReportTemplate.objects.create(
+            name='Standard Medical Checkup Template',
+            description='Template for standard medical checkup reports',
+            template_structure={'sections': ['patient_info', 'medical_history']},
+            category=self.category
         )
         
-        # Setup API and web clients
+        # Setup clients
         self.client = Client()
         self.api_client = APIClient()
 
-    def test_schedule_dashboard_view(self):
+    def test_report_dashboard_view(self):
         """
-        Test schedule dashboard view access
+        Test report dashboard view access
         """
         # Test unauthenticated access
-        response = self.client.get(reverse('schedule-dashboard'))
+        response = self.client.get(reverse('report-dashboard'))
         self.assertEqual(response.status_code, 302)  # Redirect to login
         
         # Test admin access
         self.client.login(username='admin', password='adminpass123')
-        response = self.client.get(reverse('schedule-dashboard'))
+        response = self.client.get(reverse('report-dashboard'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'schedules/dashboard.html')
+        self.assertTemplateUsed(response, 'reports/dashboard.html')
 
-    def test_schedule_calendar_view(self):
+    def test_report_export_view(self):
         """
-        Test schedule calendar view access
+        Test report export view access
         """
         # Test unauthenticated access
-        response = self.client.get(reverse('schedule-calendar'))
+        response = self.client.get(reverse('report-export'))
         self.assertEqual(response.status_code, 302)  # Redirect to login
         
         # Test doctor access
         self.client.login(username='doctor', password='doctorpass123')
-        response = self.client.get(reverse('schedule-calendar'))
+        response = self.client.get(reverse('report-export'))
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'schedules/calendar.html')
+        self.assertTemplateUsed(response, 'reports/export.html')
 
-    def test_schedule_viewset_api(self):
+    def test_report_category_viewset_api(self):
         """
-        Test Schedule ViewSet API endpoints
+        Test ReportCategory ViewSet API endpoints
         """
         # Authenticate as admin
         self.api_client.force_authenticate(user=self.admin_user)
         
         # Test list endpoint
-        response = self.api_client.get(reverse('schedule-list'))
+        response = self.api_client.get(reverse('report-category-list'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Test retrieve endpoint
-        response = self.api_client.get(reverse('schedule-detail', kwargs={'pk': self.schedule.id}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Test create endpoint
-        new_schedule_data = {
-            'title': 'New Test Schedule',
-            'doctor': self.doctor.id,
-            'patient': self.patient.id,
-            'category': self.category.id,
-            'start_time': (timezone.now() + timedelta(days=2)).isoformat(),
-            'end_time': (timezone.now() + timedelta(days=2, hours=1)).isoformat(),
-            'status': Schedule.ScheduleStatus.PENDING,
-            'priority': Schedule.SchedulePriority.MEDIUM
-        }
-        response = self.api_client.post(reverse('schedule-list'), new_schedule_data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_schedule_reminder_viewset_api(self):
-        """
-        Test ScheduleReminder ViewSet API endpoints
-        """
-        # Authenticate as admin
-        self.api_client.force_authenticate(user=self.admin_user)
-        
-        # Test list endpoint
-        response = self.api_client.get(reverse('schedule-reminder-list'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Test retrieve endpoint
-        response = self.api_client.get(reverse('schedule-reminder-detail', kwargs={'pk': self.reminder.id}))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Test create endpoint
-        new_reminder_data = {
-            'schedule': self.schedule.id,
-            'reminder_type': ScheduleReminder.ReminderType.SMS,
-            'send_time': (timezone.now() + timedelta(days=1)).isoformat()
-        }
-        response = self.api_client.post(reverse('schedule-reminder-list'), new_reminder_data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_schedule_category_viewset_api(self):
-        """
-        Test ScheduleCategory ViewSet API endpoints
-        """
-        # Authenticate as admin
-        self.api_client.force_authenticate(user=self.admin_user)
-        
-        # Test list endpoint
-        response = self.api_client.get(reverse('schedule-category-list'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
-        # Test retrieve endpoint
-        response = self.api_client.get(reverse('schedule-category-detail', kwargs={'pk': self.category.id}))
+        response = self.api_client.get(reverse('report-category-detail', kwargs={'pk': self.category.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Test create endpoint
         new_category_data = {
             'name': 'New Test Category',
-            'description': 'A new test category for schedules'
+            'description': 'A new test category for reports',
+            'report_type': 'FINANCIAL'
         }
-        response = self.api_client.post(reverse('schedule-category-list'), new_category_data)
+        response = self.api_client.post(reverse('report-category-list'), new_category_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_report_viewset_api(self):
+        """
+        Test Report ViewSet API endpoints
+        """
+        # Authenticate as admin
+        self.api_client.force_authenticate(user=self.admin_user)
+        
+        # Test list endpoint
+        response = self.api_client.get(reverse('report-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Test retrieve endpoint
+        response = self.api_client.get(reverse('report-detail', kwargs={'pk': self.report.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Test create endpoint
+        new_report_data = {
+            'title': 'New Test Report',
+            'doctor': self.doctor.id,
+            'patient': self.patient.id,
+            'category': self.category.id,
+            'status': Report.ReportStatus.DRAFT,
+            'priority': Report.ReportPriority.LOW,
+            'content': {'key': 'value'}
+        }
+        response = self.api_client.post(reverse('report-list'), new_report_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_report_template_viewset_api(self):
+        """
+        Test ReportTemplate ViewSet API endpoints
+        """
+        # Authenticate as admin
+        self.api_client.force_authenticate(user=self.admin_user)
+        
+        # Test list endpoint
+        response = self.api_client.get(reverse('report-template-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Test retrieve endpoint
+        response = self.api_client.get(reverse('report-template-detail', kwargs={'pk': self.template.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Test create endpoint
+        new_template_data = {
+            'name': 'New Test Template',
+            'description': 'A new test report template',
+            'template_structure': {'sections': ['test_section']},
+            'category': self.category.id
+        }
+        response = self.api_client.post(reverse('report-template-list'), new_template_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_unauthorized_access(self):
         """
-        Test unauthorized access to schedule endpoints
+        Test unauthorized access to report endpoints
         """
         # Authenticate as a non-admin user
         self.api_client.force_authenticate(user=self.patient_user)
         
-        # Test create schedule (should be forbidden)
-        new_schedule_data = {
-            'title': 'Unauthorized Schedule',
+        # Test create report (should be forbidden)
+        new_report_data = {
+            'title': 'Unauthorized Report',
             'doctor': self.doctor.id,
-            'patient': self.patient.id,
-            'start_time': (timezone.now() + timedelta(days=2)).isoformat(),
-            'end_time': (timezone.now() + timedelta(days=2, hours=1)).isoformat()
+            'patient': self.patient.id
         }
-        response = self.api_client.post(reverse('schedule-list'), new_schedule_data)
+        response = self.api_client.post(reverse('report-list'), new_report_data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_custom_actions(self):
@@ -203,14 +205,18 @@ class ScheduleViewsTest(TestCase):
         # Authenticate as admin
         self.api_client.force_authenticate(user=self.admin_user)
         
-        # Test upcoming schedules
-        response = self.api_client.get(reverse('upcoming-schedules'))
+        # Test recent reports
+        response = self.api_client.get(reverse('recent-reports'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # Test schedule stats
-        response = self.api_client.get(reverse('schedule-stats'))
+        # Test report stats
+        response = self.api_client.get(reverse('report-stats'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        # Test unsent reminders
-        response = self.api_client.get(reverse('unsent-reminders'))
+        # Test category reports
+        response = self.api_client.get(reverse('category-reports', kwargs={'pk': self.category.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Test template preview
+        response = self.api_client.get(reverse('template-preview', kwargs={'pk': self.template.id}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)

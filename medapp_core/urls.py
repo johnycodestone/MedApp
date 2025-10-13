@@ -25,7 +25,7 @@ urlpatterns = [
     path('appointments/', include('appointments.urls')),
     path('departments/', include('departments.urls')),
     path('hospitals/', include('hospitals.urls')),
-    path('mlmodule/', include('mlmodule.urls')),
+    path('api/ml/', include('mlmodule.urls')),
     path('patients/', include('patients.urls')),
     path('prescriptions/', include('prescriptions.urls')),
     path('reports/', include('reports.urls')),

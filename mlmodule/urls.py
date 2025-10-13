@@ -1,12 +1,22 @@
 # mlmodule/urls.py
 
-from django.urls import path
-from . import views
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import (
+    MLModelViewSet,
+    PredictionViewSet,
+    urgency_triage_view,
+    diabetes_prediction_view,
+    health_tips_view
+)
 
-# Below are basically our use cases for the ML module that we want to access and we do that via URLs.
+router = DefaultRouter()
+router.register(r'models', MLModelViewSet)
+router.register(r'predictions', PredictionViewSet, basename='predictions')
 
 urlpatterns = [
-    path('triage/', views.urgency_triage_view, name='urgency_triage'), # triage/ → Predict urgency level based on symptoms
-    path('predict-diabetes/', views.diabetes_prediction_view, name='diabetes_prediction'), # predict-diabetes/ → ML-based diabetes risk classifier
-    path('health-tips/', views.health_tips_view, name='health_tips'),  # health-tips/ → Serve awareness content or model-generated advice
+    path('', include(router.urls)),  # Enables /predictions/ and /models/
+    path('triage/', urgency_triage_view, name='urgency_triage'),
+    path('predict-diabetes/', diabetes_prediction_view, name='diabetes_prediction'),
+    path('health-tips/', health_tips_view, name='health_tips'),
 ]

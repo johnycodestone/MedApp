@@ -1,0 +1,19 @@
+<!-- prescriptions/templates/prescriptions/prescription_detail.html -->
+{% extends "base.html" %}
+{% block content %}
+  <h1>Prescription #{{ prescription.id }}</h1>
+  <p><strong>Patient:</strong> {{ prescription.patient }}</p>
+  <p><strong>Doctor:</strong> {{ prescription.doctor }}</p>
+  <p><strong>Notes:</strong> {{ prescription.notes }}</p>
+
+  <h3>Medications</h3>
+  <ul>
+    {% for med in prescription.medications.all %}
+      <li>{{ med.name }} — {{ med.dosage }} — Qty: {{ med.quantity }}</li>
+    {% endfor %}
+  </ul>
+
+  {% if prescription.file %}
+    <p><a href="{{ prescription.file.url }}">Download prescription file</a></p>
+  {% endif %}
+{% endblock %}

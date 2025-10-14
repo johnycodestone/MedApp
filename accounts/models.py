@@ -244,8 +244,4 @@ class UserActivity(models.Model):
     
     def __str__(self):
         username = self.user.username if self.user else 'Unknown'
-<<<<<<< HEAD
         return f"{username} - {self.get_action_display()} at {self.created_at}"
-=======
-        return f"{username} - {self.get_action_display()} at {self.created_at}"
->>>>>>> 4f330930bf27de1217d98f5f581174ba5f52c732

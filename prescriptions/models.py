@@ -3,7 +3,7 @@ from doctors.models import DoctorProfile
 from patients.models import PatientProfile
 
 class Prescription(models.Model):
-    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='prescriptions')
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name="prescription_app_prescriptions",)
     patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='prescriptions')
     created_at = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)

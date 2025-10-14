@@ -1,0 +1,13 @@
+{
+  "name": "medapp-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint:js": "eslint static/js --ext .js",
+    "lint:css": "stylelint static/css/**/*.css"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "stylelint": "^15.0.0"
+  }
+}

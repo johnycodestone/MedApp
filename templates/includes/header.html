@@ -1,0 +1,21 @@
+<!-- header.html
+     Purpose: simple header fragment used by base.html.
+     Replace/extend this fragment if a page needs custom navbar.
+-->
+<nav class="navbar navbar-expand-lg navbar-light bg-white">
+  <div class="container-fluid">
+    <a class="navbar-brand brand" href="{% url 'home' %}">MedApp</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="{% url 'appointments:list' %}">Appointments</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'patients:list' %}">Patients</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'reports' %}">Reports</a></li>
+        <!-- nav-actions area: JS may mount auth/user menu here via #nav-actions -->
+      </ul>
+    </div>
+  </div>
+</nav>

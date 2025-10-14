@@ -1,0 +1,38 @@
+/* base.css
+   Purpose: design tokens, reset, utilities and small layout defaults.
+   Keep this file small; component CSS lives in static/css/components/<component>.css
+*/
+
+/* Design tokens */
+:root{
+  --primary: #0b67c2;
+  --accent: #00a497;
+  --bg: #f7f9fb;
+  --text: #222;
+  --muted: #6b7280;
+  --gap: 1rem;
+  --radius: 8px;
+  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Reset / base */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font-sans);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+
+/* Header */
+.medapp-header{background:#fff;border-bottom:1px solid #e6e9ee;padding:0.75rem 1rem}
+.brand{font-weight:700;color:var(--primary);text-decoration:none;font-size:1.125rem}
+
+/* Layout helpers (small defaults; use Bootstrap grid for main layout) */
+.medapp-main{padding:1rem}
+.medapp-sidebar{padding:0.5rem}
+.medapp-content{padding:0.5rem}
+
+/* Component placeholder for staging pages */
+.cmp-placeholder{padding:0.75rem;border-radius:var(--radius);background:#fff;border:1px solid #e9eef5}
+
+/* Utility classes */
+.u-hidden{display:none}
+.u-mb-1{margin-bottom:0.5rem}
+.u-center{display:flex;align-items:center;justify-content:center}

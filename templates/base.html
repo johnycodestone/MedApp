@@ -1,0 +1,65 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{% block head %}MedApp{% endblock %}</title>
+
+    <!-- Bootstrap CSS (CDN) provides responsive grid and components -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Project core styles. Keep overrides and tokens here. -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    <!-- Page or component-specific CSS goes into this block -->
+    {% block styles %}{% endblock %}
+  </head>
+  <body class="medapp-root">
+
+    <!-- Navbar slot (pages may override). Default header included from includes/header.html -->
+    <header class="medapp-header">
+      {% block navbar %}
+        {% include 'includes/header.html' %}
+      {% endblock %}
+    </header>
+
+    <!-- Main container uses Bootstrap grid for responsiveness -->
+    <main class="container-fluid medapp-main py-3">
+      <div class="row gx-4">
+        <!-- Sidebar column. Pages override block sidebar when needed. -->
+        <aside class="col-12 col-lg-3 medapp-sidebar">
+          {% block sidebar %}{% endblock %}
+        </aside>
+
+        <!-- Main content column. All pages provide block content -->
+        <section class="col-12 col-lg-9 medapp-content">
+          {% block content %}{% endblock %}
+        </section>
+      </div>
+    </main>
+
+    <!-- Inline JSON data slot.
+         Views can inject small JSON payloads here; JS can read it with:
+         JSON.parse(document.getElementById('medapp-inline-data').textContent) -->
+    <script id="medapp-inline-data" type="application/json">
+      {% block inline-data %}{}{% endblock %}
+    </script>
+
+    <!-- Bootstrap JS bundle (CDN): includes Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core JS: namespace, component registry, auto-mount -->
+    <script src="{% static 'js/base.js' %}"></script>
+
+    <!-- Page or component-specific scripts go here -->
+    {% block scripts %}{% endblock %}
+
+    <!-- Footer slot -->
+    <footer class="medapp-footer mt-4">
+      {% block footer %}
+        {% include 'includes/footer.html' %}
+      {% endblock %}
+    </footer>
+  </body>
+</html>

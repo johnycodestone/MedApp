@@ -3,6 +3,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'appointments'   # 👈 this line is critical for header.html to recognize each of the apps
+
 # Below are basically our use cases for appointments that we want to access and we do that via URLs.
 
 urlpatterns = [

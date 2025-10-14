@@ -1,0 +1,4 @@
+# Require frontend-lead review for base templates and static
+/templates/ @frontend-lead
+/static/ @frontend-lead
+/templates/components/ @component-owners

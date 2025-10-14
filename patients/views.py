@@ -47,3 +47,7 @@ class MedicalRecordUploadView(APIView):
         records = get_records(request.user)
         serializer = MedicalRecordUploadSerializer(records, many=True)
         return Response(serializer.data)
+
+# Simple view to render the staging.html template added by Waqar
+def staging_view(request):
+    return render(request, 'pages/staging.html')

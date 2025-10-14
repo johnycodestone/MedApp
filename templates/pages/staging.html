@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block head %}Staging - MedApp{% endblock %}
+
+{% block content %}
+  <div class="page">
+    <h1 class="mb-3">Frontend Staging Page</h1>
+
+    <p class="text-muted">Use this page to mount component placeholders and verify static assets load.</p>
+
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <div class="cmp-placeholder" data-component="PatientCard" data-props='{"id": 123, "name": "Test Patient", "age": 52}'>
+          Loading PatientCard...
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="cmp-placeholder" data-component="Header" data-props='{"username":"tester"}'>
+          Loading Header...
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

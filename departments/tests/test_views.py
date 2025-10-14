@@ -1,15 +1,16 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from departments.models import Department
+
+User = get_user_model()
 
 class DepartmentViewTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="hosp_admin", password="123")
         self.client.login(username="hosp_admin", password="123")
         self.url = reverse("departments-list")
-
     def test_create_department(self):
         response = self.client.post(self.url, {
             "hospital_id": 1,

@@ -33,11 +33,12 @@ class Timetable(models.Model):
 
 
 class Prescription(models.Model):
-    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name="prescriptions")
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name="doctor_prescriptions",  )
     patient_id = models.PositiveIntegerField()
     text = models.TextField()
     pdf_file = models.FileField(upload_to="prescriptions/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
 
     def __str__(self):
         return f"Prescription to patient {self.patient_id} by {self.doctor}"

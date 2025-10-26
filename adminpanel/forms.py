@@ -1,84 +1,61 @@
+# adminpanel/forms.py
+
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import (
-    User,
-    Patient,
-    Doctor,
-    Appointment,
-    MedicalRecord,
-    Prescription
+    SystemConfiguration,
+    BackupRecord,
+    RolePermission
 )
 
-class CustomUserCreationForm(UserCreationForm):
+# -------------------------------
+# Form for SystemConfiguration
+# -------------------------------
+class SystemConfigurationForm(forms.ModelForm):
     """
-    A form for creating new users. Includes all required fields.
-    """
-    class Meta:
-        model = User
-        fields = ('username', 'email', 'first_name', 'last_name')
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-
-class CustomUserChangeForm(UserChangeForm):
-    """
-    A form for updating users. Includes all required fields.
+    Admin form for managing system configuration entries.
+    Includes validation for key uniqueness and value formatting.
     """
     class Meta:
-        model = User
-        fields = ('username', 'email', 'first_name', 'last_name')
-
-class PatientAdminForm(forms.ModelForm):
-    """
-    Admin form for Patient model with additional validation
-    """
-    class Meta:
-        model = Patient
+        model = SystemConfiguration
         fields = '__all__'
         widgets = {
-            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'contact_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'key': forms.TextInput(attrs={'class': 'form-control'}),
+            'value': forms.Textarea(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
         }
 
-    def clean_contact_number(self):
-        contact = self.cleaned_data.get('contact_number')
-        if not contact.isdigit():
-            raise forms.ValidationError("Contact number must contain only digits")
-        return contact
+    def clean_key(self):
+        key = self.cleaned_data.get('key')
+        if SystemConfiguration.objects.filter(key__iexact=key).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("A configuration with this key already exists.")
+        return key
 
-class DoctorAdminForm(forms.ModelForm):
+# -------------------------------
+# Form for BackupRecord
+# -------------------------------
+class BackupRecordForm(forms.ModelForm):
     """
-    Admin form for Doctor model with additional validation
+    Admin form for managing backup records.
     """
     class Meta:
-        model = Doctor
+        model = BackupRecord
         fields = '__all__'
         widgets = {
-            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'specialization': forms.TextInput(attrs={'class': 'form-control'}),
+            'file_path': forms.TextInput(attrs={'class': 'form-control'}),
+            'error_message': forms.Textarea(attrs={'class': 'form-control'}),
         }
 
-class AppointmentAdminForm(forms.ModelForm):
+# -------------------------------
+# Form for RolePermission
+# -------------------------------
+class RolePermissionForm(forms.ModelForm):
     """
-    Admin form for Appointment model with additional validation
+    Admin form for assigning permissions to roles.
     """
     class Meta:
-        model = Appointment
+        model = RolePermission
         fields = '__all__'
         widgets = {
-            'patient': forms.Select(attrs={'class': 'form-control'}),
-            'doctor': forms.Select(attrs={'class': 'form-control'}),
+            'permission_key': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control'}),
         }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        patient = cleaned_data.get('patient')
-        doctor = cleaned_data.get('doctor')
-        
-        if patient and doctor and patient == doctor:
-            raise forms.ValidationError("Patient cannot be the same as the doctor")
-        
-        return cleaned_data

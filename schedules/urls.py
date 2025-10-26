@@ -2,6 +2,7 @@
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import views
 from .views import (
     ScheduleCategoryViewSet,
     ScheduleViewSet,
@@ -9,6 +10,9 @@ from .views import (
     ScheduleDashboardView,
     schedule_calendar_view
 )
+
+
+app_name = 'schedules'
 
 # Create a router for API viewsets
 router = DefaultRouter()

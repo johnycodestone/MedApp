@@ -1,183 +1,114 @@
-from django.shortcuts import render, redirect
+# adminpanel/views.py
+
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
-from django.views.generic import TemplateView, ListView, DetailView
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
-from django.db.models import Count
+from django.views.generic import TemplateView, ListView
 from django.http import JsonResponse
+from django.db.models import Count
 
 from .models import (
-    Patient, 
-    Doctor, 
-    Appointment, 
-    MedicalRecord, 
-    Prescription
+    SystemConfiguration,
+    BackupRecord,
+    SystemLog,
+    RolePermission,
+    SystemMetric,
+    AuditLog
 )
-from .serializers import (
-    PatientSerializer, 
-    DoctorSerializer, 
-    AppointmentSerializer, 
-    MedicalRecordSerializer, 
-    PrescriptionSerializer
-)
-from .permissions import StrictAdminAccess, IsAdminOrReadOnly
 
+# -------------------------------
+# Admin Dashboard View
+# -------------------------------
 class AdminDashboardView(TemplateView):
     """
-    Main admin dashboard view
+    System-level admin dashboard view.
+    Displays high-level system metrics and recent logs.
     """
     template_name = 'adminpanel/dashboard.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['total_patients'] = Patient.objects.count()
-        context['total_doctors'] = Doctor.objects.count()
-        context['total_appointments'] = Appointment.objects.count()
-        context['recent_appointments'] = Appointment.objects.order_by('-appointment_date')[:5]
+        context['active_configs'] = SystemConfiguration.objects.filter(is_active=True).count()
+        context['recent_logs'] = SystemLog.objects.order_by('-created_at')[:5]
+        context['recent_backups'] = BackupRecord.objects.order_by('-started_at')[:3]
+        context['total_audit_logs'] = AuditLog.objects.count()
         return context
 
-class PatientViewSet(viewsets.ModelViewSet):
+# -------------------------------
+# System Metrics Summary API
+# -------------------------------
+@staff_member_required
+def system_metrics_summary(request):
     """
-    Viewset for Patient model with admin-level access control
+    Returns a summary of system metrics (e.g., counters, gauges).
     """
-    queryset = Patient.objects.all()
-    serializer_class = PatientSerializer
-    permission_classes = [StrictAdminAccess]
-    
-    @action(detail=False, methods=['GET'])
-    def patient_stats(self, request):
-        """
-        Custom action to get patient statistics
-        """
-        total_patients = self.queryset.count()
-        gender_breakdown = self.queryset.values('gender').annotate(count=Count('gender'))
-        
-        return Response({
-            'total_patients': total_patients,
-            'gender_breakdown': list(gender_breakdown)
-        })
+    metric_counts = SystemMetric.objects.values('metric_type').annotate(count=Count('id'))
+    return JsonResponse({'metric_summary': list(metric_counts)})
 
-class DoctorViewSet(viewsets.ModelViewSet):
+# -------------------------------
+# Configuration Overview API
+# -------------------------------
+@staff_member_required
+def config_summary_view(request):
     """
-    Viewset for Doctor model with admin-level access control
+    Returns a summary of active system configurations grouped by category.
     """
-    queryset = Doctor.objects.all()
-    serializer_class = DoctorSerializer
-    permission_classes = [StrictAdminAccess]
-    
-    @action(detail=False, methods=['GET'])
-    def specialization_stats(self, request):
-        """
-        Custom action to get doctor specialization statistics
-        """
-        specialization_breakdown = self.queryset.values('specialization').annotate(count=Count('specialization'))
-        
-        return Response({
-            'specialization_breakdown': list(specialization_breakdown)
-        })
+    config_counts = SystemConfiguration.objects.filter(is_active=True).values('category').annotate(count=Count('id'))
+    return JsonResponse({'active_config_summary': list(config_counts)})
 
-class AppointmentViewSet(viewsets.ModelViewSet):
+# -------------------------------
+# Audit Log Statistics API
+# -------------------------------
+@staff_member_required
+def audit_log_stats_view(request):
     """
-    Viewset for Appointment model with admin-level access control
+    Returns statistics about audit log actions.
     """
-    queryset = Appointment.objects.all()
-    serializer_class = AppointmentSerializer
-    permission_classes = [StrictAdminAccess]
-    
-    @action(detail=False, methods=['GET'])
-    def appointment_stats(self, request):
-        """
-        Custom action to get appointment statistics
-        """
-        total_appointments = self.queryset.count()
-        status_breakdown = self.queryset.values('status').annotate(count=Count('status'))
-        
-        return Response({
-            'total_appointments': total_appointments,
-            'status_breakdown': list(status_breakdown)
-        })
+    action_counts = AuditLog.objects.values('action').annotate(count=Count('id'))
+    return JsonResponse({'audit_action_summary': list(action_counts)})
 
+# -------------------------------
 # Error Handler Views
+# -------------------------------
 def bad_request(request, exception):
-    """
-    Custom 400 error handler
-    """
+    """Custom 400 error handler"""
     return render(request, 'adminpanel/errors/400.html', status=400)
 
 def permission_denied(request, exception):
-    """
-    Custom 403 error handler
-    """
+    """Custom 403 error handler"""
     return render(request, 'adminpanel/errors/403.html', status=403)
 
 def page_not_found(request, exception):
-    """
-    Custom 404 error handler
-    """
+    """Custom 404 error handler"""
     return render(request, 'adminpanel/errors/404.html', status=404)
 
 def server_error(request):
-    """
-    Custom 500 error handler
-    """
+    """Custom 500 error handler"""
     return render(request, 'adminpanel/errors/500.html', status=500)
 
-# Authentication Views
+# -------------------------------
+# Admin Authentication Views
+# -------------------------------
 @staff_member_required
 def admin_login_view(request):
     """
-    Custom admin login view with additional security checks
+    Custom admin login view with additional security checks.
+    Placeholder for future implementation.
     """
-    # Implement login logic here
     pass
 
 @login_required
 def admin_logout_view(request):
     """
-    Custom admin logout view
+    Custom admin logout view.
+    Placeholder for future implementation.
     """
-    # Implement logout logic here
     pass
 
 @staff_member_required
 def admin_password_reset_view(request):
     """
-    Custom admin password reset view
+    Custom admin password reset view.
+    Placeholder for future implementation.
     """
-    # Implement password reset logic here
-    pass
-
-# Utility Views
-@staff_member_required
-def patient_count_view(request):
-    """
-    View to get patient count
-    """
-    patient_count = Patient.objects.count()
-    return JsonResponse({'patient_count': patient_count})
-
-@staff_member_required
-def appointment_stats_view(request):
-    """
-    View to get appointment statistics
-    """
-    total_appointments = Appointment.objects.count()
-    pending_appointments = Appointment.objects.filter(status='pending').count()
-    completed_appointments = Appointment.objects.filter(status='completed').count()
-    
-    return JsonResponse({
-        'total_appointments': total_appointments,
-        'pending_appointments': pending_appointments,
-        'completed_appointments': completed_appointments
-    })
-
-@staff_member_required
-def revenue_summary_view(request):
-    """
-    View to get revenue summary
-    """
-    # Implement revenue calculation logic
     pass

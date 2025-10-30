@@ -8,7 +8,7 @@ class DoctorProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="doctor_profile"
+        related_name="doctors_doctor_profile"
     )
     specialization = models.CharField(max_length=100)
     experience_years = models.PositiveIntegerField(default=0)

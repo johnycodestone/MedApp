@@ -1,0 +1,19 @@
+# MedApp URL Naming Convention
+
+## Standard URL Names (All Apps)
+- `list` - List/index page for the module
+- `detail` - Detail view (requires pk)
+- `create` - Create new item
+- `update` - Update item (requires pk)
+- `delete` - Delete item (requires pk)
+
+## Usage in Templates
+Always use namespace: `{% url 'app_name:url_name' %}`
+
+Examples:
+- `{% url 'appointments:list' %}`
+- `{% url 'patients:detail' pk=patient.id %}`
+- `{% url 'reports:create' %}`
+
+## API Routes
+All API routes should be under `/api/` prefix within each app.

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>My Appointments</h1>
+
+{% include 'components/AppointmentFilter.html' %}
+
+<div id="appointment-list" class="appointment-list">
+  {% for appointment in appointments %}
+    {% include 'components/AppointmentCard.html' %}
+  {% endfor %}
+</div>
+
+{% include 'components/ConfirmationModal.html' %}
+
+<script src="{% static 'appointments/js/appointments.js' %}"></script>
+{% endblock %}

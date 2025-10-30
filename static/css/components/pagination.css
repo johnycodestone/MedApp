@@ -1,0 +1,23 @@
+/* pagination.css
+   Purpose: Shared pagination styling.
+   Notes:
+   - Uses Bootstrap pagination classes as base.
+   - Adds spacing and hover states consistent with MedApp tokens.
+*/
+
+.pagination .page-link {
+  color: var(--primary);
+  border-radius: var(--radius-1);
+  margin: 0 var(--space-1);
+}
+
+.pagination .page-link:hover {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.pagination .active .page-link {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}

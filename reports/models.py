@@ -8,7 +8,12 @@ Handles system-wide reporting, statistics, and data exports.
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
-from adminpanel.models import Doctor, Patient, Appointment, MedicalRecord, Prescription
+from accounts.models import DoctorProfile, PatientProfile
+from appointments.models import Appointment
+from prescriptions.models import Prescription
+from patients.models import MedicalRecord
+from django.conf import settings
+
 
 class ReportCategory(models.Model):
     """
@@ -56,14 +61,14 @@ class Report(models.Model):
     
     # Optional relationships to other models
     doctor = models.ForeignKey(
-        Doctor, 
+        DoctorProfile, 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
         related_name='reports'
     )
     patient = models.ForeignKey(
-        Patient, 
+        PatientProfile, 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
@@ -108,17 +113,19 @@ class Report(models.Model):
     
     # Tracking and audit
     generated_by = models.ForeignKey(
-        'auth.User', 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='generated_reports'
     )
+
     reviewed_by = models.ForeignKey(
-        'auth.User', 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='reviewed_reports'
     )
+
     
     def __str__(self):
         return f"{self.title} - {self.get_status_display()}"

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>Find a Doctor</h1>
+
+{% include 'components/DoctorFilter.html' %}
+
+<div id="doctor-list" class="doctor-list">
+  {% for doctor in doctors %}
+    {% include 'components/DoctorCard.html' %}
+  {% endfor %}
+</div>
+
+<script src="{% static 'doctor/js/doctor.js' %}"></script>
+{% endblock %}

@@ -245,3 +245,86 @@ class UserActivity(models.Model):
     def __str__(self):
         username = self.user.username if self.user else 'Unknown'
         return f"{username} - {self.get_action_display()} at {self.created_at}"
+
+# because these are needed in the schedules app:
+class DoctorProfile(models.Model): 
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='accounts_doctor_profile')
+    specialization = models.CharField(max_length=100)
+    license_number = models.CharField(max_length=50)
+    # Add more doctor-specific fields
+
+    def __str__(self):
+        return f"Dr. {self.user.get_full_name()}"
+
+# because these are needed in the schedules app:
+class PatientProfile(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='accounts_patient_profile')
+    date_of_birth = models.DateField()
+    medical_history = models.TextField(blank=True)
+    # Add more patient-specific fields
+
+    def __str__(self):
+        return self.user.get_full_name()
+
+# because these are needed in the schedules app:
+class HospitalProfile(models.Model):
+    """
+    Profile for users with HOSPITAL role.
+    
+    Fields:
+    - user: One-to-one link to CustomUser
+    - hospital_name: Display name of the hospital
+    - license_number: Regulatory license ID
+    - address: Physical location
+    - contact_email: Email for hospital communication
+    - contact_phone: Phone number for hospital contact
+    """
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='accounts_hospital_profile')
+    hospital_name = models.CharField(max_length=150)
+    license_number = models.CharField(max_length=50)
+    address = models.TextField(blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=20, blank=True)
+
+    def __str__(self):
+        return self.hospital_name
+
+class AdminProfile(models.Model):
+    """
+    Profile for users with ADMIN role.
+
+    Fields:
+    - user: One-to-one link to CustomUser
+    - full_name: Display name of the admin
+    - contact_email: Admin's email address
+    - contact_phone: Admin's phone number
+    - permissions: Optional JSON field for custom access control
+    """
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='accounts_admin_profile'
+    )
+    full_name = models.CharField(max_length=100)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=20, blank=True)
+    permissions = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return self.full_name
+
+
+
+class Department(models.Model):
+    """
+    Medical departments within a hospital.
+    
+    Fields:
+    - name: Unique name of the department (e.g., Cardiology)
+    - description: Optional description of department scope
+    """
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.name

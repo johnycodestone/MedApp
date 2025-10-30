@@ -1,22 +1,35 @@
+# adminpanel/apps.py
+
 from django.apps import AppConfig
 
-
 class AdminpanelConfig(AppConfig):
+    """
+    Configuration class for the adminpanel app.
+
+    This app handles system-level administration for MedApp, including:
+    - System configurations
+    - Logs and metrics
+    - Backup tracking
+    - Audit trails
+    - Role-based permissions
+
+    It does NOT manage domain-specific models like users, doctors, or patients.
+    """
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'adminpanel'
-    verbose_name = 'Medical Application Admin Panel'
+    verbose_name = 'MedApp System Administration'
 
     def ready(self):
         """
-        Method called when the app is ready to be used.
-        Can be used for importing signals, initializing app-specific configurations, etc.
+        Called when the app is fully loaded.
+
+        Responsibilities:
+        - Register signal handlers for system models
+        - Avoid any database access here to prevent migration-time crashes
         """
-        # Import signals to ensure they are registered
+        # Register signal handlers
         import adminpanel.signals
 
-        # Optional: Perform any startup tasks or validations
-        try:
-            from .utils import validate_admin_configurations
-            validate_admin_configurations()
-        except ImportError:
-            pass  # Silently ignore if validation utility is not available
+        # ⚠️ DO NOT call validate_admin_configurations() here.
+        # It queries the database, which may not be ready during migrations.
+        # Instead, call it from a safe runtime location (e.g., dashboard view or management command).

@@ -1,0 +1,14 @@
+<div class="appointment-card">
+  <div class="appointment-info">
+    <h3>{{ appointment.doctor_name }}</h3>
+    <p>Date: {{ appointment.date }}</p>
+    <p>Time: {{ appointment.time }}</p>
+    <p>Status: <span class="status {{ appointment.status|lower }}">{{ appointment.status }}</span></p>
+  </div>
+  <div class="appointment-actions">
+    <button class="btn-view" onclick="viewAppointment('{{ appointment.id }}')">View</button>
+    {% if appointment.status != 'Completed' %}
+      <button class="btn-cancel" onclick="openConfirmModal('{{ appointment.id }}')">Cancel</button>
+    {% endif %}
+  </div>
+</div>

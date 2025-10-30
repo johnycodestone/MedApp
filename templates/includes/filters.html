@@ -1,0 +1,32 @@
+{# filters.html
+   Purpose: Shared search + filter chips component.
+   Usage:
+     - Include in list pages: {% include "includes/filters.html" with filters=filters %}
+     - Expects 'filters' context variable: list of { "label": str, "value": str, "active": bool }
+     - Optionally, include a search bar by passing 'show_search=True'.
+#}
+
+<!-- Filters: Any app with searchable/filterable lists (appointments, doctors, patients, reports, departments)
+can drop this in. Context-driven, so flexible. -->
+
+<div class="medapp-filters mb-3">
+  {% if show_search %}
+    <form method="get" class="filter-search mb-2">
+      <input type="text"
+             name="q"
+             value="{{ request.GET.q|default:'' }}"
+             placeholder="Search..."
+             class="form-control"
+             aria-label="Search">
+    </form>
+  {% endif %}
+
+  <div class="filter-chips d-flex flex-wrap gap-2">
+    {% for f in filters %}
+      <a href="?filter={{ f.value }}"
+         class="chip {% if f.active %}chip-active{% endif %}">
+        {{ f.label }}
+      </a>
+    {% endfor %}
+  </div>
+</div>

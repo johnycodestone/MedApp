@@ -13,6 +13,8 @@ from .views import (
     admin_password_reset_view
 )
 
+app_name = 'adminpanel'   # 👈 this line is critical for header.html to recognize each of the apps
+
 # -------------------------------
 # URL patterns for adminpanel
 # -------------------------------

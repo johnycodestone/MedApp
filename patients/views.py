@@ -48,6 +48,10 @@ class MedicalRecordUploadView(APIView):
         serializer = MedicalRecordUploadSerializer(records, many=True)
         return Response(serializer.data)
 
+def patient_list_view(request):
+    """List all patients - placeholder for now"""
+    from django.shortcuts import render
+    return render(request, 'patients/list.html')
 # Simple view to render the staging.html template added by Waqar
 def staging_view(request):
     return render(request, 'pages/staging.html')

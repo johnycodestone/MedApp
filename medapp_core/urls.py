@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import render
+from django.views.generic import TemplateView  # ✅ Add this import at the top
 
 # Simple homepage view added by Waqar
 def home_view(request):
@@ -36,4 +37,6 @@ urlpatterns = [
     path('prescriptions/', include('prescriptions.urls')),
     path('reports/', include('reports.urls')),
     path('schedules/', include('schedules.urls')),
+    path('staging/', TemplateView.as_view(template_name='pages/staging.html'), name='staging'),
+
 ]

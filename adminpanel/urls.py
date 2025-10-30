@@ -13,6 +13,9 @@ from .views import (
     admin_password_reset_view
 )
 
+
+app_name = "adminpanel"
+
 # -------------------------------
 # URL patterns for adminpanel
 # -------------------------------

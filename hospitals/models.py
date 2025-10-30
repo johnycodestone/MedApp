@@ -9,7 +9,7 @@ class Hospital(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="hospital_profile"
+        related_name="hospitals_hospital_profile"
     )
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=500, blank=True, null=True)

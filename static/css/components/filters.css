@@ -1,0 +1,33 @@
+/* filters.css
+   Purpose: Shared styling for search bar and filter chips.
+   Notes:
+   - Chips are styled buttons/links.
+   - Active chip uses primary color.
+*/
+
+.filter-search input {
+  max-width: 300px;
+}
+
+.filter-chips .chip {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-2);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: var(--fs-2);
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.filter-chips .chip:hover {
+  background-color: var(--primary);
+  color: #fff;
+}
+
+.filter-chips .chip-active {
+  background-color: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}

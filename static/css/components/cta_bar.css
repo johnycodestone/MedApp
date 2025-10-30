@@ -1,0 +1,31 @@
+/* cta_bar.css
+   Purpose: Shared styling for CTA bar buttons.
+   Notes:
+   - Uses Bootstrap's .btn classes as base.
+   - Adds MedApp-specific color tokens for consistency.
+*/
+
+.cta-bar {
+  justify-content: flex-start;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-600);
+  border-color: var(--primary-600);
+}
+
+.btn-accent {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-accent:hover {
+  background-color: var(--accent-600);
+  border-color: var(--accent-600);
+}

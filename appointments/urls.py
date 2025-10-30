@@ -9,6 +9,8 @@ router = DefaultRouter()
  #   path('', include(router.urls)),  # ✅ This mounts POST /appointments/
 #]
 
+app_name = 'appointments'   # 👈 this line is critical for header.html to recognize each of the apps
+
 router = DefaultRouter()
 router.register(r'api', AppointmentViewSet, basename='appointment')
 

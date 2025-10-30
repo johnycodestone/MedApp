@@ -1,20 +1,54 @@
 <!-- header.html
-     Purpose: simple header fragment used by base.html.
-     Replace/extend this fragment if a page needs custom navbar.
+     Purpose: global navbar fragment included by base.html.
+     Notes:
+     - Uses Bootstrap's navbar with accessible toggler/collapse.
+     - Replace hrefs with your real URL names; ensure they exist in your project.
 -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white">
+{% load static %} 
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
   <div class="container-fluid">
-    <a class="navbar-brand brand" href="{% url 'home' %}">MedApp</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+    <!-- Brand: text or logo -->
+    <a class="navbar-brand brand d-flex align-items-center" href="{% url 'home' %}">
+      <!-- Optional logo image:
+      <img src="{% static 'img/logo.svg' %}" alt="MedApp" class="me-2" height="24">
+      -->
+      <span>MedApp</span>
+    </a>
+
+    <!-- Mobile toggler -->
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navMenu"
+      aria-controls="navMenu"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
       <span class="navbar-toggler-icon"></span>
     </button>
 
+    <!-- Collapsible navigation -->
     <div class="collapse navbar-collapse" id="navMenu">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="{% url 'appointments:list' %}">Appointments</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'patients:list' %}">Patients</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'reports:list' %}">Reports</a></li>
+      <!-- Left-aligned primary nav -->
+      <ul class="navbar-nav me-auto">
+        <!-- Replace these URL names with your actual routes or add conditional rendering -->
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'appointments:list' %}">Appointments</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'patients:list' %}">Patients</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'reports:list' %}">Reports</a>
+        </li>
       </ul>
+
+      <!-- Right-aligned actions (JS can mount auth/user menu here) -->
+      <div id="nav-actions" class="d-flex align-items-center">
+        <!-- Example: Login/Signup buttons or user dropdown -->
+        <!-- Your JS can detect auth state and populate this area -->
+      </div>
     </div>
   </div>
 </nav>

@@ -1,0 +1,73 @@
+.doctor-card {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  background: #fff;
+}
+
+.doctor-photo {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  margin-right: 20px;
+}
+
+.doctor-info h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.doctor-filter {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.doctor-filter input, .doctor-filter select, .doctor-filter button {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.btn-view, .btn-book {
+  background: #007bff;
+  color: #fff;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-view:hover, .btn-book:hover {
+  background: #0056b3;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  padding-top: 100px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+  width: 400px;
+  border-radius: 10px;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+  font-size: 22px;
+}

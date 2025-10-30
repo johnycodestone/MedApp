@@ -1,38 +1,111 @@
 /* base.css
-   Purpose: design tokens, reset, utilities and small layout defaults.
-   Keep this file small; component CSS lives in static/css/components/<component>.css
+   Purpose:
+   - Apply resets and global defaults
+   - Provide small layout helpers
+   - Define utility classes
+   Notes:
+   - Design tokens (colors, spacing, typography, radii, shadows) now live in tokens.css
+   - This file should only reference tokens via var(--token-name)
 */
 
-/* Design tokens */
-:root{
-  --primary: #0b67c2;
-  --accent: #00a497;
-  --bg: #f7f9fb;
-  --text: #222;
-  --muted: #6b7280;
-  --gap: 1rem;
-  --radius: 8px;
-  --font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+/* ------------------------------
+   Reset / base defaults
+------------------------------ */
+* {
+  box-sizing: border-box;
 }
 
-/* Reset / base */
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;font-family:var(--font-sans);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+html, body {
+  height: 100%;
+}
 
-/* Header */
-.medapp-header{background:#fff;border-bottom:1px solid #e6e9ee;padding:0.75rem 1rem}
-.brand{font-weight:700;color:var(--primary);text-decoration:none;font-size:1.125rem}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
 
-/* Layout helpers (small defaults; use Bootstrap grid for main layout) */
-.medapp-main{padding:1rem}
-.medapp-sidebar{padding:0.5rem}
-.medapp-content{padding:0.5rem}
+/* ------------------------------
+   Header / Navbar
+------------------------------ */
+.medapp-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+}
 
-/* Component placeholder for staging pages */
-.cmp-placeholder{padding:0.75rem;border-radius:var(--radius);background:#fff;border:1px solid #e9eef5}
+.brand {
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: var(--fs-4);
+}
 
-/* Utility classes */
-.u-hidden{display:none}
-.u-mb-1{margin-bottom:0.5rem}
-.u-center{display:flex;align-items:center;justify-content:center}
+/* ------------------------------
+   Layout helpers
+   (Bootstrap grid handles main layout,
+   these add small padding defaults)
+------------------------------ */
+.medapp-main {
+  padding: var(--space-4);
+}
+
+.medapp-sidebar {
+  padding: var(--space-2);
+}
+
+.medapp-content {
+  padding: var(--space-2);
+}
+
+/* ------------------------------
+   Component placeholders
+   (useful for staging/demo pages)
+------------------------------ */
+.cmp-placeholder {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+/* ------------------------------
+   Utilities
+------------------------------ */
+.u-hidden {
+  display: none !important;
+}
+
+.u-mb-1 {
+  margin-bottom: var(--space-2);
+}
+
+.u-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Accessibility: visually hidden but focusable (for skip links) */
+.visually-hidden-focusable {
+  position: absolute;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.visually-hidden-focusable:focus {
+  clip: auto;
+  clip-path: none;
+  height: auto;
+  width: auto;
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-1);
+}

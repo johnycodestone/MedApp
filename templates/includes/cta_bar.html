@@ -1,0 +1,23 @@
+{# cta_bar.html
+   Purpose: Shared call-to-action bar (e.g., Book Appointment, Consult Online).
+   Usage:
+     - Include in detail pages: {% include "includes/cta_bar.html" with actions=actions %}
+     - Expects 'actions' context variable: list of { "label": str, "url": str, "style": str }
+       Example:
+         actions = [
+           {"label": "Book Appointment", "url": "/appointments/book/", "style": "primary"},
+           {"label": "Consult Online", "url": "/consult/", "style": "accent"}
+         ]
+#}
+
+<!-- CTA Bar: Any detail page (doctor profile, department detail, patient record, report view)
+can reuse this to present consistent action buttons. -->
+
+<div class="cta-bar d-flex flex-wrap gap-2 my-3">
+  {% for action in actions %}
+    <a href="{{ action.url }}"
+       class="btn btn-{{ action.style }}">
+       {{ action.label }}
+    </a>
+  {% endfor %}
+</div>

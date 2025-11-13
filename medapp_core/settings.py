@@ -75,9 +75,11 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.static',  # Added for static files
             ],
         },
     },
@@ -131,11 +133,25 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [   # Added by Waqar to do the base setup of frontend
-    os.path.join(BASE_DIR, 'static'),
+# Directories where Django will look for static files during development
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # Project-level static files
 ]
+
+# Directory where collectstatic will collect all static files for production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Static file finders
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+# Media files (User uploads like avatars, reports, etc.)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Default primary key field type

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="history-container">
+  <h2>My History</h2>
+
+  <h3>Appointments</h3>
+  <ul>
+    {% for appointment in appointments %}
+      <li>{{ appointment.date }} - {{ appointment.doctor.name }}</li>
+    {% empty %}
+      <li>No appointments found.</li>
+    {% endfor %}
+  </ul>
+
+  <h3>Prescriptions</h3>
+  <ul>
+    {% for prescription in prescriptions %}
+      <li>{{ prescription.date }} - {{ prescription.medicine }}</li>
+    {% empty %}
+      <li>No prescriptions found.</li>
+    {% endfor %}
+  </ul>
+
+  <h3>Reports</h3>
+  <ul>
+    {% for report in reports %}
+      <li>{{ report.date }} - {{ report.type }}</li>
+    {% empty %}
+      <li>No reports found.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

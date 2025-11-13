@@ -10,6 +10,32 @@ from rest_framework import status, permissions
 from .serializers import PatientProfileSerializer, SaveDoctorSerializer, MedicalRecordUploadSerializer
 from .services import ensure_profile_for_user, add_favorite_doctor, delete_favorite_doctor, upload_medical_record, get_records
 
+from django.shortcuts import render
+from reports.models import Report  # ✅ adjust if your model is named differently
+from prescriptions.models import Prescription
+from appointments.models import Appointment  # or use a service if needed
+
+def dashboard_view(request):
+    user = request.user if request.user.is_authenticated else None
+
+    reports = Report.objects.none()
+    prescriptions = Prescription.objects.none()
+    appointments = Appointment.objects.none()
+
+    if user:
+        reports = Report.objects.filter(patient=user).order_by('-date')[:5]
+        prescriptions = Prescription.objects.filter(patient=user).order_by('-created_at')[:5]
+        appointments = Appointment.objects.filter(patient=user).order_by('-scheduled_time')[:5]
+
+    context = {
+        'reports': reports,
+        'prescriptions': prescriptions,
+        'appointments': appointments,
+    }
+    return render(request, 'patients/dashboard.html', context)
+
+
+
 class PatientProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -55,3 +81,16 @@ def patient_list_view(request):
 # Simple view to render the staging.html template added by Waqar
 def staging_view(request):
     return render(request, 'pages/staging.html')
+
+
+# patients/views.py (add these at the bottom, keep existing code unchanged)
+
+
+
+def profile_page_view(request):
+    """Render the patient profile template (UI version, not API)"""
+    return render(request, 'patients/profile.html')
+
+def history_view(request):
+    """Render the patient history template"""
+    return render(request, 'patients/history.html')

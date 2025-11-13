@@ -1,0 +1,13 @@
+<div class="doctor-card">
+  <h3>Dr. {{ doctor.user.first_name }} {{ doctor.user.last_name }}</h3>
+  <p><strong>Specialization:</strong> {{ doctor.specialization }}</p>
+  <p><strong>Experience:</strong> {{ doctor.experience_years }} years</p>
+  <p><strong>Qualification:</strong> {{ doctor.qualification }}</p>
+  <p><strong>Rating:</strong> {{ doctor.rating }}</p>
+  <p>{{ doctor.bio|truncatewords:25 }}</p>
+
+  <div class="card-actions">
+    <a href="{% url 'doctors:doctor-profile' %}?id={{ doctor.id }}" class="btn">View Profile</a>
+    <a href="{% url 'appointments:list' %}?doctor={{ doctor.id }}" class="btn outline">Book Now</a>
+  </div>
+</div>

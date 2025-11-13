@@ -6,6 +6,8 @@ from .serializers import AppointmentSerializer
 from .services import AppointmentService
 from .permissions import IsOwnerOrDoctor
 
+
+
 class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.all()
     serializer_class = AppointmentSerializer
@@ -57,3 +59,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if appointment:
             return Response({'status': 'cancelled'})
         return Response({'error': 'Unauthorized or not found'}, status=status.HTTP_403_FORBIDDEN)
+
+from django.views.generic import CreateView
+from .models import Appointment
+
+class AppointmentCreateView(CreateView):
+    model = Appointment
+    fields = ['doctor', 'patient', 'scheduled_time', 'status']
+    template_name = 'appointments/create.html'
+    success_url = '/appointments/'

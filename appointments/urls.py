@@ -1,24 +1,10 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import AppointmentViewSet
+from django.urls import path
+from .views import AppointmentViewSet,AppointmentCreateView
+
 app_name = "appointments"
-router = DefaultRouter()
-#router.register(r'', AppointmentViewSet, basename='appointments')  # ✅ Use empty string here
-
-#urlpatterns = [
- #   path('', include(router.urls)),  # ✅ This mounts POST /appointments/
-#]
-
-app_name = 'appointments'   # 👈 this line is critical for header.html to recognize each of the apps
-
-router = DefaultRouter()
-router.register(r'api', AppointmentViewSet, basename='appointment')
 
 urlpatterns = [
-    # UI Routes
-    path('', AppointmentViewSet.as_view({'get': 'list'}), name='list'),
-    path('<int:pk>/', AppointmentViewSet.as_view({'get': 'retrieve'}), name='detail'),
-    
-    # API Routes
-    path('', include(router.urls)),
+    path('', AppointmentViewSet.as_view({'get': 'list'}), name='appointment-list'),
+    path('<int:pk>/', AppointmentViewSet.as_view({'get': 'retrieve'}), name='appointment-detail'),
+    path('create/', AppointmentCreateView.as_view(), name='create'),  # ✅ new route
 ]

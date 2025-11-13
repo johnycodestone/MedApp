@@ -1,0 +1,7 @@
+<form method="get" class="doctor-filter-form">
+  <input type="text" name="q" placeholder="Search name, bio, qualification" value="{{ filters.q }}">
+  <input type="text" name="specialization" placeholder="Specialization" value="{{ filters.specialization }}">
+  <input type="number" name="min_exp" placeholder="Min experience" value="{{ filters.min_exp }}">
+  <input type="number" name="min_rating" placeholder="Min rating" step="0.1" value="{{ filters.min_rating }}">
+  <button type="submit">Apply Filters</button>
+</form>

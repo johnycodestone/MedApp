@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="doctors-list">
+  <header class="filters">
+    <form method="get">
+      <input type="text" name="q" placeholder="Search doctors, specialties">
+      <select name="city"><option value="">All cities</option></select>
+      <select name="specialty"><option value="">All specialties</option></select>
+      <button type="submit">Search</button>
+    </form>
+  </header>
+
+  <div class="grid">
+    {% for doctor in doctors %}
+      <article class="doctor-card">
+        <h3>{{ doctor.name }}</h3>
+        <p>{{ doctor.specialty.name }} • {{ doctor.city.name }}</p>
+        <p>Fee: {{ doctor.fee }} PKR</p>
+        <a class="btn" href="{% url 'doctors:doctor-profile' %}?id={{ doctor.id }}">View Profile</a>
+      </article>
+    {% empty %}
+      <p>No doctors found. Try different filters.</p>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+      {% endif %}
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+</section>
+{% endblock %}

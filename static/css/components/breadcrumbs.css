@@ -1,26 +1,61 @@
-/* breadcrumbs.css
-   Purpose: Shared breadcrumb styling.
-   Notes:
-   - Builds on Bootstrap's breadcrumb component.
-   - Uses MedApp tokens for colors and spacing.
-*/
+/* ============================================================================
+   breadcrumbs.css
+   Purpose:
+     - Shared breadcrumb styling for MedApp.
+     - Builds on Bootstrap's breadcrumb component but applies MedApp tokens
+       for consistent branding and UX.
 
+   Design Notes:
+     - Cleaner arrow separator (›) instead of default slash (/).
+     - Uses MedApp design tokens for spacing, colors, and typography.
+   ============================================================================ */
+
+/* --------------------------------------------------------------------------
+   Breadcrumb container
+   - Transparent background for seamless integration.
+   - Adds spacing below breadcrumbs for layout balance.
+   -------------------------------------------------------------------------- */
 .breadcrumb {
   background-color: transparent;
   margin-bottom: var(--space-3);
   padding: 0;
 }
 
+/* --------------------------------------------------------------------------
+   Separator styling
+   - Replaces Bootstrap's default slash with a cleaner arrow (›).
+   - Uses muted color for subtlety.
+   -------------------------------------------------------------------------- */
 .breadcrumb-item + .breadcrumb-item::before {
-  content: "›"; /* cleaner arrow than default slash */
+  content: "›";
   color: var(--muted);
 }
 
+/* --------------------------------------------------------------------------
+   Link styling
+   - Applies to non-active breadcrumb items.
+   - Uses primary color for brand consistency.
+   -------------------------------------------------------------------------- */
 .breadcrumb a {
   color: var(--primary);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
+/* --------------------------------------------------------------------------
+   Hover state
+   - Adds underline for clarity when hovering links.
+   -------------------------------------------------------------------------- */
 .breadcrumb a:hover {
   text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Active crumb styling
+   - Final breadcrumb item (current page).
+   - Styled via Bootstrap defaults but can be customized here if needed.
+   -------------------------------------------------------------------------- */
+.breadcrumb-item.active {
+  color: var(--text); /* Neutral text color for current page */
+  font-weight: 500;   /* Slight emphasis */
 }

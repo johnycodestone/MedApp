@@ -1,14 +1,16 @@
-{# pagination.html
-   Purpose: Shared pagination controls for list views across apps.
+{# ============================================================================
+   pagination.html
+   Purpose:
+     - Shared pagination controls for list views across MedApp apps.
+     - Preserves query parameters (filters, search terms) when navigating pages.
+
    Usage:
-     - Include in any list page: {% include "includes/pagination.html" %}
+     - Include in any list page:
+         {% include "includes/pagination.html" %}
      - Requires context variables:
          page_obj: Django Paginator page object
          request.GET: for preserving query parameters
-#}
-
-<!-- Pagination: Any app with list views (appointments, patients, doctors, reports) can drop in this partial. 
-It automatically preserves query parameters (filters, search terms). -->
+   ============================================================================ #}
 
 {% if page_obj.has_other_pages %}
 <nav aria-label="Page navigation">
@@ -29,7 +31,7 @@ It automatically preserves query parameters (filters, search terms). -->
       </li>
     {% endif %}
 
-    {# Page numbers #}
+    {# Page numbers loop #}
     {% for num in page_obj.paginator.page_range %}
       {% if page_obj.number == num %}
         <li class="page-item active" aria-current="page">
@@ -64,3 +66,10 @@ It automatically preserves query parameters (filters, search terms). -->
 </nav>
 {% endif %}
 
+{# ============================================================================
+   Developer Notes:
+   - Uses Bootstrap classes for styling (pagination, page-item, page-link).
+   - Preserves all query parameters except 'page' when navigating.
+   - Accessible: aria-labels for navigation, aria-current for active page.
+   - Works seamlessly with pagination.js for enhanced UX or AJAX mode.
+   ============================================================================ #}

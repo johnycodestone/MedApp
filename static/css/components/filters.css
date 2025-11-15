@@ -1,33 +1,67 @@
-/* filters.css
-   Purpose: Shared styling for search bar and filter chips.
-   Notes:
-   - Chips are styled buttons/links.
-   - Active chip uses primary color.
-*/
+/* ============================================================================
+   filters.css
+   Purpose:
+     - Shared styling for the search bar and filter chips used across MedApp modules.
+     - Ensures consistent UI for filtering interfaces (departments, doctors, appointments, etc.)
 
+   Design Notes:
+     - Uses CSS variables for theme consistency and easy customization.
+     - Chips are styled as pill-like buttons with hover and active states.
+     - Search input is compact and visually unobtrusive.
+   ============================================================================ */
+
+/* --------------------------------------------------------------------------
+   Search Input Styling
+   - Applies to the optional search bar rendered above filter chips.
+   - Restricts width for visual balance and alignment.
+   -------------------------------------------------------------------------- */
 .filter-search input {
-  max-width: 300px;
+  max-width: 300px; /* Prevents input from stretching too wide */
 }
 
+/* --------------------------------------------------------------------------
+   Filter Chip Base Styling
+   - Applies to each individual filter chip (e.g., city, service).
+   - Designed to look like a pill/button with subtle borders and spacing.
+   - Uses theme variables for consistent styling across the app.
+   -------------------------------------------------------------------------- */
 .filter-chips .chip {
-  display: inline-block;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-2);
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: var(--fs-2);
-  text-decoration: none;
-  transition: background-color 0.2s, color 0.2s;
+  display: inline-block; /* Allows chips to flow inline and wrap */
+  padding: var(--space-1) var(--space-3); /* Vertical and horizontal spacing */
+  border-radius: var(--radius-2); /* Rounded corners for pill shape */
+  background-color: var(--surface); /* Neutral background from theme */
+  border: 1px solid var(--border); /* Subtle border for separation */
+  color: var(--text); /* Default text color from theme */
+  font-size: var(--fs-2); /* Scalable font size */
+  text-decoration: none; /* Removes underline from anchor tags */
+  transition: background-color 0.2s, color 0.2s; /* Smooth hover effect */
 }
 
+/* --------------------------------------------------------------------------
+   Hover State Styling
+   - Enhances interactivity by changing background and text color on hover.
+   - Uses primary theme color to indicate clickable behavior.
+   -------------------------------------------------------------------------- */
 .filter-chips .chip:hover {
-  background-color: var(--primary);
-  color: #fff;
+  background-color: var(--primary); /* Highlight background */
+  color: #fff; /* White text for contrast */
 }
 
+/* --------------------------------------------------------------------------
+   Active Chip Styling
+   - Applies to the currently selected filter chip.
+   - Visually distinguishes active filters from inactive ones.
+   -------------------------------------------------------------------------- */
 .filter-chips .chip-active {
-  background-color: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
+  background-color: var(--primary); /* Same as hover for consistency */
+  color: #fff; /* White text for readability */
+  border-color: var(--primary); /* Reinforces active state with border */
 }
+
+/* ============================================================================
+   Developer Notes:
+   - Ensure that CSS variables (e.g., --primary, --surface, --text) are defined in tokens.css or root theme.
+   - This stylesheet is scoped to the filters component and should be imported wherever filters.html is used.
+   - Responsive behavior is handled via flex-wrap in filters.html layout.
+   - For accessibility, consider adding focus styles and ARIA roles in HTML.
+   ============================================================================ */

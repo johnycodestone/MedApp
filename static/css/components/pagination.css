@@ -1,23 +1,70 @@
-/* pagination.css
-   Purpose: Shared pagination styling.
-   Notes:
-   - Uses Bootstrap pagination classes as base.
-   - Adds spacing and hover states consistent with MedApp tokens.
-*/
+/* ============================================================================
+   pagination.css
+   Purpose:
+     - Shared pagination styling for MedApp list views (departments, doctors, appointments, etc.).
+     - Builds on Bootstrap's pagination classes but applies MedApp design tokens
+       for consistent branding and UX.
 
+   Design Notes:
+     - Uses CSS variables (tokens.css) for colors, spacing, and radii.
+     - Provides hover, active, disabled, and focus states for accessibility.
+     - Keeps pagination compact and visually aligned with MedApp’s design system.
+   ============================================================================ */
+
+/* --------------------------------------------------------------------------
+   Base link styling
+   - Applies to all pagination links.
+   - Ensures consistent color, spacing, and rounded corners.
+   -------------------------------------------------------------------------- */
 .pagination .page-link {
-  color: var(--primary);
-  border-radius: var(--radius-1);
-  margin: 0 var(--space-1);
+  color: var(--primary);              /* Default text color matches brand primary */
+  border-radius: var(--radius-1);     /* Slight rounding for pill-like feel */
+  margin: 0 var(--space-1);           /* Horizontal spacing between links */
+  border: 1px solid var(--border);    /* Subtle border for separation */
+  background-color: var(--surface);   /* Neutral background */
+  transition: background-color 0.2s, color 0.2s; /* Smooth hover/active transitions */
 }
 
+/* --------------------------------------------------------------------------
+   Hover state
+   - Provides clear feedback when users hover over links.
+   - Uses primary color background with white text for contrast.
+   -------------------------------------------------------------------------- */
 .pagination .page-link:hover {
   background-color: var(--primary);
   color: #fff;
 }
 
+/* --------------------------------------------------------------------------
+   Active state
+   - Highlights the currently selected page.
+   - Matches hover styling but persists until another page is selected.
+   -------------------------------------------------------------------------- */
 .pagination .active .page-link {
   background-color: var(--primary);
   border-color: var(--primary);
   color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   Disabled state
+   - Styles links that are not clickable (e.g., "Previous" on first page).
+   - Uses muted colors and disables pointer interaction.
+   -------------------------------------------------------------------------- */
+.pagination .disabled .page-link {
+  color: var(--text-muted);
+  background-color: var(--surface);
+  border-color: var(--border);
+  cursor: not-allowed;
+  opacity: 0.6; /* Visual cue for disabled state */
+}
+
+/* --------------------------------------------------------------------------
+   Focus state (accessibility)
+   - Ensures keyboard users can see which link is focused.
+   - Adds a visible outline using the primary color.
+   -------------------------------------------------------------------------- */
+.pagination .page-link:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }

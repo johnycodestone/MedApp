@@ -1,27 +1,32 @@
-{# breadcrumbs.html
-   Purpose: Shared breadcrumb navigation for detail pages.
+{# ============================================================================
+   breadcrumbs.html
+   Purpose:
+     - Shared breadcrumb navigation for hierarchical detail pages.
+     - Provides context and navigation path (e.g., Home → Departments → Cardiology).
+     - Reusable across MedApp apps (departments, doctors, patients, reports, etc.).
+
    Usage:
-     - Include in any detail page: {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
-     - Expects 'crumbs' context variable: list of { "label": str, "url": str or None }
-       Example:
+     - Include in any detail page:
+         {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+     - Requires 'crumbs' context variable:
          crumbs = [
            {"label": "Home", "url": "/"},
            {"label": "Departments", "url": "/departments/"},
            {"label": "Cardiology", "url": None}
          ]
-#}
+   ============================================================================ #}
 
-<!-- Breadcrumbs: Any app with hierarchical navigation (departments → cardiology, patients → profile, reports → detail)
-can reuse this. Context-driven, so flexible. -->
-
+<!-- Breadcrumbs: Context-driven navigation component -->
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb">
     {% for crumb in crumbs %}
+      {# Non-final crumbs with URLs are rendered as links #}
       {% if not forloop.last and crumb.url %}
         <li class="breadcrumb-item">
           <a href="{{ crumb.url }}">{{ crumb.label }}</a>
         </li>
       {% else %}
+        {# Final crumb or crumb without URL is marked active #}
         <li class="breadcrumb-item active" aria-current="page">
           {{ crumb.label }}
         </li>
@@ -29,3 +34,11 @@ can reuse this. Context-driven, so flexible. -->
     {% endfor %}
   </ol>
 </nav>
+
+{# ============================================================================
+   Developer Notes:
+   - Uses Bootstrap's breadcrumb component for base styling.
+   - Active crumb (last item) is not clickable and marked with aria-current="page".
+   - Context-driven: flexible for any hierarchy depth.
+   - Styling overrides are handled in breadcrumbs.css.
+   ============================================================================ #}

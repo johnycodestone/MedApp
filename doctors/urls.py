@@ -11,9 +11,13 @@
 #]
 
 from django.urls import path
-from .views import DoctorProfileView, TimetableView, CancelAppointmentView, PrescriptionView
+from .views import DoctorProfileView, TimetableView, CancelAppointmentView, PrescriptionView, DoctorListView,DoctorDetailView
+app_name = "doctors"
 
 urlpatterns = [
+    path('', DoctorListView.as_view(), name='doctor-list'),
+    path("list/", DoctorListView.as_view(), name="doctor-list"),  # ✅ new
+    path("<int:id>/", DoctorDetailView.as_view(), name="doctor-detail"),
     path("profile/", DoctorProfileView.as_view(), name="doctor-profile"),
     path("timetable/", TimetableView.as_view(), name="doctor-timetable"),
     path("cancel-appointment/", CancelAppointmentView.as_view(), name="cancel-appointment"),

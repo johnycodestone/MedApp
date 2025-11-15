@@ -1,17 +1,37 @@
 {% extends 'base.html' %}
 {% block content %}
-
 <div class="doctor-detail">
-  <img src="{{ doctor.image_url }}" alt="{{ doctor.name }}" class="doctor-detail-photo">
-  <div class="doctor-detail-info">
-    <h2>{{ doctor.name }}</h2>
-    <p>Specialization: {{ doctor.specialization }}</p>
-    <p>Experience: {{ doctor.experience }} years</p>
-    <p>Consultation Fee: Rs. {{ doctor.fee }}</p>
-    <button onclick="openModal()" class="btn-book">Book Appointment</button>
-  </div>
+  <h2>Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h2>
+  {% if profile %}
+    <p><strong>Specialization:</strong> {{ profile.specialization }}</p>
+    <p><strong>Experience:</strong> {{ profile.experience_years }} years</p>
+    <p><strong>Qualification:</strong> {{ profile.qualification }}</p>
+    <p><strong>Rating:</strong> {{ profile.rating }}</p>
+    <p>{{ profile.bio }}</p>
+  {% endif %}
+
+  <hr>
+  <h3>Available Slots (Next 7 Days)</h3>
+
+  {% if available_slots %}
+    <form id="booking-form">
+      {% csrf_token %}
+      <input type="hidden" name="doctor" value="{{ doctor.id }}">
+      <label for="slot">Select a time:</label>
+      <select name="scheduled_time" id="slot">
+        {% for slot in available_slots %}
+          <option value="{{ slot|date:'Y-m-d H:i:s' }}">{{ slot|date:'D, M d — h:i A' }}</option>
+        {% endfor %}
+      </select>
+      <label for="reason">Reason (optional):</label>
+      <textarea name="reason" id="reason"></textarea>
+      <button type="submit">Book Appointment</button>
+    </form>
+    <div id="booking-result"></div>
+  {% else %}
+    <p>No available slots in the next 7 days. Please check back later or contact support.</p>
+  {% endif %}
 </div>
 
-{% include 'components/AppointmentModal.html' %}
-<script src="{% static 'doctor/js/booking.js' %}"></script>
+<script src="{% static 'doctors/js/doctor.js' %}"></script>
 {% endblock %}

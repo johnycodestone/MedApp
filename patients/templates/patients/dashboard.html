@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="dashboard">
+  <div class="dashboard-header">
+    <h2>Welcome back, {{ request.user.first_name }}! 👋</h2>
+    <p class="dashboard-subtitle">Here's what's happening with your health today</p>
+  </div>
+
+  <div class="quick-actions">
+    <a href="{% url 'appointments:appointment-list' %}" class="btn">
+      <span style="font-size: 1.5rem;">📅</span>
+      <span>View Appointments</span>
+    </a>
+    <a href="{% url 'doctors:doctor-list' %}" class="btn">
+      <span style="font-size: 1.5rem;">👨‍⚕️</span>
+      <span>Find a Doctor</span>
+    </a>
+    <a href="{% url 'prescriptions:list' %}" class="btn">
+      <span style="font-size: 1.5rem;">💊</span>
+      <span>View Prescriptions</span>
+    </a>
+    <a href="{% url 'reports:dashboard' %}" class="btn">
+      <span style="font-size: 1.5rem;">📁</span>
+      <span>My Reports</span>
+    </a>
+  </div>
+
+  <div class="section">
+    <h3>Recent Appointments</h3>
+    <div class="card-grid">
+      {% for appt in appointments %}
+        <div class="card">
+          <p><strong>{{ appt.scheduled_time|date:"l, F d" }}</strong></p>
+          <p style="font-size: 1.125rem; color: var(--primary-color); font-weight: 600;">
+            {{ appt.scheduled_time|date:"h:i A" }}
+          </p>
+          <p style="margin-top: 1rem;">
+            <span style="color: #6b7280; font-size: 0.875rem;">Doctor</span><br>
+            <strong style="font-size: 1rem;">{{ appt.doctor.get_full_name }}</strong>
+          </p>
+          <p style="margin-top: 0.75rem;">
+            <span class="card-status {{ appt.status }}">{{ appt.status|title }}</span>
+          </p>
+          <a href="{% url 'appointments:detail' appt.id %}" style="margin-top: 1rem;">
+            View Details
+          </a>
+        </div>
+      {% empty %}
+        <p>No upcoming appointments. <a href="{% url 'appointments:create' %}" style="font-weight: 600;">Book one now</a>!</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Recent Prescriptions</h3>
+    <div class="card-grid">
+      {% for pres in prescriptions %}
+        <div class="card">
+          <p><strong>{{ pres.created_at|date:"F d, Y" }}</strong></p>
+          <p style="margin-top: 0.75rem;">
+            <span style="color: #6b7280; font-size: 0.875rem;">Prescribed by</span><br>
+            <strong style="font-size: 1rem;">Dr. {{ pres.doctor.user.get_full_name }}</strong>
+          </p>
+          <p style="margin-top: 1rem; padding: 1rem; background: var(--gray-50); border-radius: 0.5rem; font-size: 0.9375rem;">
+            {{ pres.text|truncatewords:20 }}
+          </p>
+          <a href="{% url 'prescriptions:detail' pres.id %}" style="margin-top: 1rem;">
+            View Full Prescription
+          </a>
+        </div>
+      {% empty %}
+        <p>No prescriptions yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Recent Reports</h3>
+    <div class="card-grid">
+      {% for report in reports %}
+        <div class="card">
+          <p><strong>{{ report.date|date:"F d, Y" }}</strong></p>
+          <p style="margin-top: 0.75rem; font-size: 1.125rem; font-weight: 600; color: var(--text-primary);">
+            {{ report.title }}
+          </p>
+          <p style="margin-top: 0.5rem; color: #6b7280; font-size: 0.875rem;">
+            {{ report.description|default:"Medical report" }}
+          </p>
+          <a href="{{ report.file.url }}" target="_blank" 
+             style="margin-top: 1rem; background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%); 
+                    color: white; padding: 0.625rem 1.25rem; border-radius: 0.5rem; display: inline-flex; 
+                    align-items: center; gap: 0.5rem;">
+            <span>📥</span>
+            <span>Download</span>
+          </a>
+        </div>
+      {% empty %}
+        <p>No reports available yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="trust-strip">
+    <p>
+      <span>✅ PMC Verified Doctors</span>
+      <span>🔒 Secure Medical Records</span>
+      <span>🕑 24/7 Support Available</span>
+    </p>
+  </div>
+</div>
+
+<link rel="stylesheet" href="{% static 'patients/css/dashboard.css' %}">
+<script src="{% static 'patients/js/dashboard.js' %}"></script>
+{% endblock %}

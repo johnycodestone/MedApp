@@ -34,14 +34,16 @@
       <ul class="navbar-nav me-auto">
         <!-- Replace these URL names with your actual routes or add conditional rendering -->
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'appointments:list' %}">Appointments</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'patients:list' %}">Patients</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'reports:list' %}">Reports</a>
-        </li>
+        <a href="{% url 'appointments:appointment-list' %}">Appointments</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'patients:dashboard' %}">Patients</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'reports:dashboard' %}">Reports</a>
+      </li>
+
+
       </ul>
 
       <!-- Right-aligned actions (JS can mount auth/user menu here) -->

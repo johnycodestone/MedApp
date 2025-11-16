@@ -1,0 +1,62 @@
+<!-- {# ============================================================================
+   list.html
+   Purpose:
+     - App-level template for displaying all departments in a list/grid view.
+     - Integrates root-level components: filters, pagination, breadcrumbs.
+     - Provides a clean, attractive layout for browsing departments.
+
+   Usage:
+     - Rendered by the Departments app view.
+     - Context variables expected:
+         crumbs: breadcrumb trail (list of {label, url})
+         filters: filter options (list of {label, value, active})
+         show_search: boolean to toggle search bar
+         page_obj: Django Paginator object for pagination
+         departments: list of department objects {name, description, image_url, slug}
+   ============================================================================ #} -->
+
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'css/departments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+
+  {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+  {% include "includes/filters.html" with filters=filters show_search=show_search %}
+
+  <div class="dept-grid" aria-live="polite">
+    {% for dept in departments %}
+      <article class="dept-card" tabindex="0" data-dept-index="{{ forloop.counter0 }}">
+        <a href="{% url 'departments:page-detail' dept.id %}" class="dept-link" aria-label="View {{ dept.name }} details">
+          <div class="dept-media">
+            <img
+              src="{{ dept.image_url }}"
+              alt="{{ dept.name }} image"
+              loading="lazy"
+              class="dept-image">
+          </div>
+          <div class="dept-body">
+            <h3 class="dept-title">{{ dept.name }}</h3>
+            <p class="dept-desc">{{ dept.description|truncatewords:18 }}</p>
+          </div>
+        </a>
+      </article>
+    {% empty %}
+      <div class="col-12">
+        <p class="text-muted text-center">No departments found.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% include "includes/pagination.html" %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/departments.js' %}"></script>
+{% endblock %}

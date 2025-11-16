@@ -1,3 +1,5 @@
+<!--
+
 {# ============================================================================
    filters.html
    Purpose:
@@ -7,7 +9,9 @@
 
    Usage:
      - Include in any list page template:
-         {% include "includes/filters.html" with filters=filters show_search=True %}
+-->
+
+<!-- {#
      - Requires 'filters' context variable:
          filters = [
            { "label": "Cardiology", "value": "cardiology", "active": True },
@@ -15,7 +19,8 @@
            ...
          ]
      - Optional 'show_search' boolean to toggle search bar.
-   ============================================================================ #}
+   ============================================================================ #} 
+  -->
 
 <!-- Root container for the filters component -->
 <div class="medapp-filters mb-3">
@@ -43,7 +48,7 @@
   </div>
 
 </div>
-
+<!-- 
 {# ============================================================================
    Developer Notes:
    - The 'chip' class should be styled in filters.css to look like a pill/button.
@@ -51,4 +56,4 @@
    - Clicking a chip navigates to the same page with ?filter=value in the URL.
    - If using AJAX filtering, override default behavior in filters.js.
    - This component is designed to be dropped into any list-based view.
-   ============================================================================ #}
+   ============================================================================ #} -->

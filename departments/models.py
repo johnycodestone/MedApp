@@ -10,6 +10,8 @@ class Department(models.Model):
     description = models.TextField(blank=True, null=True)
     head_doctor_id = models.PositiveIntegerField(blank=True, null=True)  # reference to doctor
     created_at = models.DateTimeField(auto_now_add=True)
+    image_url = models.URLField(blank=True, null=True) # URL to department image
+
 
     class Meta:
         unique_together = ("hospital_id", "name")

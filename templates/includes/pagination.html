@@ -1,4 +1,4 @@
-{# ============================================================================
+<!-- {# ============================================================================
    pagination.html
    Purpose:
      - Shared pagination controls for list views across MedApp apps.
@@ -6,11 +6,11 @@
 
    Usage:
      - Include in any list page:
-         {% include "includes/pagination.html" %}
+        
      - Requires context variables:
          page_obj: Django Paginator page object
          request.GET: for preserving query parameters
-   ============================================================================ #}
+   ============================================================================ #} -->
 
 {% if page_obj.has_other_pages %}
 <nav aria-label="Page navigation">
@@ -66,10 +66,10 @@
 </nav>
 {% endif %}
 
-{# ============================================================================
+<!-- {# ============================================================================
    Developer Notes:
    - Uses Bootstrap classes for styling (pagination, page-item, page-link).
    - Preserves all query parameters except 'page' when navigating.
    - Accessible: aria-labels for navigation, aria-current for active page.
    - Works seamlessly with pagination.js for enhanced UX or AJAX mode.
-   ============================================================================ #}
+   ============================================================================ #} -->

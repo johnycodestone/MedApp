@@ -1,0 +1,71 @@
+/* ============================================================================
+   departments_list.css
+   Purpose:
+     - App-level styling for the Departments list page.
+     - Enhances layout and visual appeal beyond root-level components.
+     - Ensures consistency with MedApp design tokens and Bootstrap utilities.
+   ============================================================================ */
+
+/* --------------------------------------------------------------------------
+   Department list grid
+   - Provides spacing and alignment for department cards.
+   -------------------------------------------------------------------------- */
+.department-list {
+  margin-top: var(--space-3);
+}
+
+/* --------------------------------------------------------------------------
+   Department card styling
+   - Attractive card layout with hover effects.
+   - Uses MedApp tokens for consistent design.
+   -------------------------------------------------------------------------- */
+.department-card {
+  border-radius: var(--radius-2);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.department-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+/* --------------------------------------------------------------------------
+   Department card image
+   - Ensures consistent aspect ratio and rounded corners.
+   -------------------------------------------------------------------------- */
+.department-card img {
+  height: 180px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border);
+}
+
+/* --------------------------------------------------------------------------
+   Department card body
+   - Provides spacing and typography for content.
+   -------------------------------------------------------------------------- */
+.department-card .card-body {
+  padding: var(--space-3);
+}
+
+.department-card .card-title {
+  font-size: var(--fs-4);
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.department-card .card-text {
+  font-size: var(--fs-2);
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+/* --------------------------------------------------------------------------
+   CTA button
+   - Styled consistently with MedApp’s primary button design.
+   -------------------------------------------------------------------------- */
+.department-card .btn {
+  font-size: var(--fs-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-1);
+}

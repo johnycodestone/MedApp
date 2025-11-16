@@ -1,0 +1,80 @@
+/* ============================================================================
+   departments_detail.css
+   Purpose:
+     - App-level styling for the Departments detail page.
+     - Enhances layout and visual appeal for department overview, services,
+       doctors, and hospitals.
+     - Ensures consistency with MedApp design tokens and Bootstrap utilities.
+   ============================================================================ */
+
+/* --------------------------------------------------------------------------
+   Department header
+   - Styles the top section with image and description.
+   -------------------------------------------------------------------------- */
+.department-header img {
+  max-height: 220px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.department-title {
+  font-size: var(--fs-6);
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.department-description {
+  font-size: var(--fs-3);
+  line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   Section titles
+   - Consistent styling for Services, Doctors, Hospitals sections.
+   -------------------------------------------------------------------------- */
+.section-title {
+  font-size: var(--fs-4);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+  color: var(--primary);
+}
+
+/* --------------------------------------------------------------------------
+   Doctor cards
+   - Attractive card layout for doctors.
+   -------------------------------------------------------------------------- */
+.doctor-card {
+  border-radius: var(--radius-2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.doctor-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.doctor-card img {
+  height: 160px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border);
+}
+
+/* --------------------------------------------------------------------------
+   Hospital cards
+   - Similar styling to doctor cards but larger image.
+   -------------------------------------------------------------------------- */
+.hospital-card {
+  border-radius: var(--radius-2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hospital-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.hospital-card img {
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 1px solid var(--border);
+}

@@ -1,0 +1,104 @@
+{# ============================================================================
+   departments_detail.html
+   Purpose:
+     - App-level template for displaying details of a single department.
+     - Integrates root-level components: breadcrumbs, CTA bar.
+     - Provides overview, services, doctors, and related hospitals.
+
+   Usage:
+     - Rendered by the Departments app detail view.
+     - Context variables expected:
+         crumbs: breadcrumb trail (list of {label, url})
+         department: {name, description, image_url, services}
+         doctors: list of doctor objects {name, specialty, image_url, profile_url}
+         hospitals: list of hospital objects {name, location, image_url, detail_url}
+   ============================================================================ #}
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+
+  {# Breadcrumbs for navigation context #}
+  {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+
+  {# Department header section #}
+  <div class="department-header mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-4">
+        <img src="{{ department.image_url }}" 
+             alt="{{ department.name }}" 
+             class="img-fluid rounded shadow-sm">
+      </div>
+      <div class="col-md-8">
+        <h2 class="department-title">{{ department.name }}</h2>
+        <p class="department-description text-muted">
+          {{ department.description }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {# CTA bar for quick actions (root-level component) #}
+  {% include "includes/cta_bar.html" %}
+
+  {# Services offered by the department #}
+  <section class="department-services mb-5">
+    <h4 class="section-title">Services Offered</h4>
+    <ul class="list-group list-group-flush">
+      {% for service in department.services %}
+        <li class="list-group-item">{{ service }}</li>
+      {% empty %}
+        <li class="list-group-item text-muted">No services listed.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {# Doctors associated with the department #}
+  <section class="department-doctors mb-5">
+    <h4 class="section-title">Top Doctors</h4>
+    <div class="row">
+      {% for doc in doctors %}
+        <div class="col-md-4 mb-4">
+          <div class="card doctor-card h-100 shadow-sm">
+            <img src="{{ doc.image_url }}" class="card-img-top" alt="{{ doc.name }}">
+            <div class="card-body">
+              <h5 class="card-title">{{ doc.name }}</h5>
+              <p class="card-text text-muted">{{ doc.specialty }}</p>
+              <a href="{{ doc.profile_url }}" class="btn btn-outline-primary btn-sm">
+                View Profile
+              </a>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted">No doctors available for this department.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# Hospitals associated with the department #}
+  <section class="department-hospitals mb-5">
+    <h4 class="section-title">Associated Hospitals</h4>
+    <div class="row">
+      {% for hosp in hospitals %}
+        <div class="col-md-6 mb-4">
+          <div class="card hospital-card h-100 shadow-sm">
+            <img src="{{ hosp.image_url }}" class="card-img-top" alt="{{ hosp.name }}">
+            <div class="card-body">
+              <h5 class="card-title">{{ hosp.name }}</h5>
+              <p class="card-text text-muted">{{ hosp.location }}</p>
+              <a href="{{ hosp.detail_url }}" class="btn btn-outline-primary btn-sm">
+                View Details
+              </a>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted">No hospitals associated with this department.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

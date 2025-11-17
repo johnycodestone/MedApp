@@ -1,4 +1,4 @@
-<!-- {# ============================================================================
+{# ============================================================================
    breadcrumbs.html
    Purpose:
      - Shared breadcrumb navigation for hierarchical detail pages.
@@ -7,14 +7,14 @@
 
    Usage:
      - Include in any detail page:
-        
+         {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
      - Requires 'crumbs' context variable:
          crumbs = [
            {"label": "Home", "url": "/"},
            {"label": "Departments", "url": "/departments/"},
            {"label": "Cardiology", "url": None}
          ]
-   ============================================================================ #} -->
+   ============================================================================ #}
 
 <!-- Breadcrumbs: Context-driven navigation component -->
 <nav aria-label="breadcrumb">
@@ -35,10 +35,10 @@
   </ol>
 </nav>
 
-<!-- {# ============================================================================
+{# ============================================================================
    Developer Notes:
    - Uses Bootstrap's breadcrumb component for base styling.
    - Active crumb (last item) is not clickable and marked with aria-current="page".
    - Context-driven: flexible for any hierarchy depth.
    - Styling overrides are handled in breadcrumbs.css.
-   ============================================================================ #} -->
+   ============================================================================ #}

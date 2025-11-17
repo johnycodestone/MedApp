@@ -1,15 +1,31 @@
-{# filters.html
-   Purpose: Shared search + filter chips component.
+<!--
+
+{# ============================================================================
+   filters.html
+   Purpose:
+     - Shared component for rendering a search bar and filter chips.
+     - Used across MedApp modules (departments, doctors, appointments, etc.)
+     - Promotes consistent UI and behavior for filtering lists.
+
    Usage:
-     - Include in list pages: {% include "includes/filters.html" with filters=filters %}
-     - Expects 'filters' context variable: list of { "label": str, "value": str, "active": bool }
-     - Optionally, include a search bar by passing 'show_search=True'.
-#}
+     - Include in any list page template:
+-->
 
-<!-- Filters: Any app with searchable/filterable lists (appointments, doctors, patients, reports, departments)
-can drop this in. Context-driven, so flexible. -->
+<!-- {#
+     - Requires 'filters' context variable:
+         filters = [
+           { "label": "Cardiology", "value": "cardiology", "active": True },
+           { "label": "Neurology", "value": "neurology", "active": False },
+           ...
+         ]
+     - Optional 'show_search' boolean to toggle search bar.
+   ============================================================================ #} 
+  -->
 
+<!-- Root container for the filters component -->
 <div class="medapp-filters mb-3">
+
+  {# Optional search bar section — shown only if 'show_search' is True #}
   {% if show_search %}
     <form method="get" class="filter-search mb-2">
       <input type="text"
@@ -21,6 +37,7 @@ can drop this in. Context-driven, so flexible. -->
     </form>
   {% endif %}
 
+  {# Filter chips section — renders each filter as a clickable chip #}
   <div class="filter-chips d-flex flex-wrap gap-2">
     {% for f in filters %}
       <a href="?filter={{ f.value }}"
@@ -29,4 +46,14 @@ can drop this in. Context-driven, so flexible. -->
       </a>
     {% endfor %}
   </div>
+
 </div>
+<!-- 
+{# ============================================================================
+   Developer Notes:
+   - The 'chip' class should be styled in filters.css to look like a pill/button.
+   - The 'chip-active' class should visually highlight the selected filter.
+   - Clicking a chip navigates to the same page with ?filter=value in the URL.
+   - If using AJAX filtering, override default behavior in filters.js.
+   - This component is designed to be dropped into any list-based view.
+   ============================================================================ #} -->

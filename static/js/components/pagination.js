@@ -1,29 +1,33 @@
-/* pagination.js
+/* ============================================================================
+   pagination.js
    Purpose:
-   - Enhance pagination links with better UX and optional AJAX hooks.
-   - Prevent double-clicks, preserve non-page query params, scroll to top on navigation.
-   - Provide a pluggable handler for AJAX pagination without changing templates.
+     - Enhance pagination links with better UX and optional AJAX hooks.
+     - Prevent double-clicks, preserve non-page query params, scroll to top on navigation.
+     - Provide a pluggable handler for AJAX pagination without changing templates.
 
    How it works:
-   - Finds .pagination containers and their links.
-   - For normal navigation: ensures only one click is processed, sets aria-busy,
-     and scrolls to top (progressive enhancement).
-   - For AJAX mode: if window.MedAppPagination.loadPage is defined, it will
-     intercept clicks and call that function with the target page number and
-     current query parameters (excluding 'page').
+     - Finds .pagination containers and their links.
+     - For normal navigation: ensures only one click is processed, sets aria-busy,
+       and scrolls to top (progressive enhancement).
+     - For AJAX mode: if window.MedAppPagination.loadPage is defined, it will
+       intercept clicks and call that function with the target page number and
+       current query parameters (excluding 'page').
 
    Integration:
-   - Include this script globally via base.html or on pages that use pagination.
-   - To enable AJAX:
-       window.MedAppPagination = {
-         loadPage: function (page, params) {
-           // Implement your fetch → render → update logic here.
-         }
-       };
-*/
+     - Include this script globally via base.html or on pages that use pagination.
+     - To enable AJAX:
+         window.MedAppPagination = {
+           loadPage: function (page, params) {
+             // Implement your fetch → render → update logic here.
+           }
+         };
+   ============================================================================ */
 
 (function () {
-  // Utility: parse current location's query params into a Map
+  /**
+   * Utility: Parse current location's query params into a Map
+   * @returns {Map} key-value pairs of query parameters
+   */
   function parseQueryParams() {
     const params = new URLSearchParams(window.location.search);
     const map = new Map();
@@ -31,19 +35,26 @@
     return map;
   }
 
-  // Utility: build a query string preserving all params except 'page'
+  /**
+   * Utility: Build a query string preserving all params except 'page'
+   * @param {number} page - target page number
+   * @param {Map} paramsMap - existing query parameters
+   * @returns {string} query string with updated page
+   */
   function buildQueryStringWithPage(page, paramsMap) {
     const next = new URLSearchParams();
-    // Preserve existing params except 'page'
     paramsMap.forEach((value, key) => {
       if (key !== 'page') next.append(key, value);
     });
-    // Set target page
     next.set('page', String(page));
     return `?${next.toString()}`;
   }
 
-  // Extract page number from a pagination link's href safely
+  /**
+   * Utility: Extract page number from a pagination link's href safely
+   * @param {string} href - link href
+   * @returns {number|null} page number or null if not found
+   */
   function getPageFromHref(href) {
     try {
       const url = new URL(href, window.location.origin);
@@ -54,7 +65,9 @@
     }
   }
 
-  // Smoothly scroll to top (progressive enhancement)
+  /**
+   * Utility: Smoothly scroll to top (progressive enhancement)
+   */
   function scrollToTop() {
     try {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -69,15 +82,13 @@
   // Initialize enhancement on DOM ready
   document.addEventListener('DOMContentLoaded', () => {
     const paginations = document.querySelectorAll('nav[aria-label="Page navigation"] .pagination');
-
     if (!paginations.length) return;
 
     const currentParams = parseQueryParams();
     let isNavigating = false; // prevent double activations
 
     paginations.forEach((ul) => {
-      // Set ARIA to indicate dynamic interaction when busy
-      ul.setAttribute('aria-live', 'polite');
+      ul.setAttribute('aria-live', 'polite'); // accessibility: announce updates
 
       const links = ul.querySelectorAll('.page-link');
 
@@ -85,27 +96,21 @@
         link.addEventListener('click', (evt) => {
           const li = link.closest('.page-item');
           if (!li || li.classList.contains('disabled') || li.classList.contains('active')) {
-            // Ignore clicks on disabled/active items
-            evt.preventDefault();
+            evt.preventDefault(); // ignore disabled/active clicks
             return;
           }
 
-          // Determine target page from href
           const targetPage = getPageFromHref(link.href);
-          if (!targetPage) {
-            // If we can't parse a page, fall back to default navigation
-            return;
-          }
+          if (!targetPage) return; // fallback to default navigation if parsing fails
 
-          // If AJAX hook is provided, intercept and handle via JS
+          // AJAX mode: intercept and delegate to custom loader
           if (typeof window.MedAppPagination.loadPage === 'function') {
-            evt.preventDefault(); // stop default navigation
+            evt.preventDefault();
             if (isNavigating) return;
 
             isNavigating = true;
             ul.setAttribute('aria-busy', 'true');
 
-            // Build params object (excluding 'page') to pass to loader
             const paramsObj = {};
             currentParams.forEach((value, key) => {
               if (key !== 'page') paramsObj[key] = value;
@@ -114,7 +119,6 @@
             Promise.resolve()
               .then(() => window.MedAppPagination.loadPage(targetPage, paramsObj))
               .catch((err) => {
-                // If loader fails, gracefully fall back to full navigation
                 console.error('MedAppPagination.loadPage error:', err);
                 window.location.assign(buildQueryStringWithPage(targetPage, currentParams));
               })
@@ -127,19 +131,16 @@
             return;
           }
 
-          // No AJAX: enhance default navigation
+          // Default navigation mode
           if (isNavigating) {
             evt.preventDefault();
             return;
           }
           isNavigating = true;
 
-          // Prevent duplicate requests, show busy state
           ul.setAttribute('aria-busy', 'true');
-
-          // Rebuild URL to ensure all non-page params are preserved
-          // Some templates already include them, but we make it robust
           evt.preventDefault();
+
           const target = buildQueryStringWithPage(targetPage, currentParams);
           scrollToTop();
           window.location.assign(target);

@@ -14,11 +14,15 @@
 #]
 
 from django.urls import path
-from .views import HospitalProfileView, DepartmentView, DoctorDutyView, ReportListView
+from .views import HospitalProfileView, DepartmentView, DoctorDutyView, ReportListView, HospitalsListPageView, HospitalsDetailPageView
+
+app_name = "hospitals"
 
 urlpatterns = [
     path("profile/", HospitalProfileView.as_view(), name="hospital-profile"),
     path("departments/", DepartmentView.as_view(), name="departments"),
     path("duties/", DoctorDutyView.as_view(), name="doctor-duties"),
     path("reports/", ReportListView.as_view(), name="hospital-reports"),
+    path("ui/", HospitalsListPageView.as_view(), name="page-list"),
+    path("ui/<int:pk>/", HospitalsDetailPageView.as_view(), name="page-detail"),
 ]

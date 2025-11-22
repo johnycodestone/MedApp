@@ -1,0 +1,70 @@
+<!-- {# 
+  Shared Card Component
+  Purpose:
+    - Base layout for all entity cards (hospitals, doctors, patients, departments).
+    - Accepts a flexible "item" object and optional "config" dict for behavior/styling.
+
+  Usage:
+    {% include "components/card.html" with
+       item=item
+       config={
+         "url_name": "hospitals:page-detail",    # URL name to reverse
+         "url_arg": item.id,                     # ID or slug
+         "title": item.name,                     # Main title
+         "subtitle": item.city,                  # Secondary line (optional)
+         "image_url": item.image_url,            # Card image (optional)
+         "badges": badges_list,                  # List of { label, variant }
+         "kpis": kpi_list,                       # List of { label, value }
+         "aria_label": "View details",           # Link aria-label fallback
+         "target": "_self"                       # Link target, defaults to _self
+       }
+    %}
+#} -->
+
+<article class="c-card" tabindex="0">
+  <a
+    class="c-card__link js-card-link"
+    href="{% if config.url_name %}{% url config.url_name config.url_arg %}{% else %}#{% endif %}"
+    aria-label="{{ config.aria_label|default:'Open details for ' }}{{ config.title|default:item.name }}"
+    target="{{ config.target|default:'_self' }}"
+  >
+    <div class="c-card__media">
+      {# Image is optional; component still renders gracefully without it #}
+      {% if config.image_url %}
+        <img
+          src="{{ config.image_url }}"
+          alt="{{ config.title|default:item.name }}"
+          loading="lazy"
+          class="c-card__image u-img-cover u-ratio-16x9"
+        >
+      {% endif %}
+      {# Optional badges (e.g., PMC Verified) #}
+      {% if config.badges %}
+        <div class="c-card__badges">
+          {% for b in config.badges %}
+            {% include "components/badge.html" with label=b.label variant=b.variant only %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="c-card__body">
+      <h3 class="c-card__title">{{ config.title|default:item.name }}</h3>
+      {% if config.subtitle %}
+        <p class="c-card__subtitle">{{ config.subtitle }}</p>
+      {% endif %}
+
+      {# Optional KPI row: small stats under the subtitle #}
+      {% if config.kpis %}
+        <div class="c-card__kpis">
+          {% for k in config.kpis %}
+            <span class="c-card__kpi">
+              <strong class="c-card__kpi-label">{{ k.label }}:</strong>
+              <span class="c-card__kpi-value">{{ k.value }}</span>
+            </span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </a>
+</article>

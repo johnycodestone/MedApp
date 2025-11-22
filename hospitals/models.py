@@ -12,9 +12,16 @@ class Hospital(models.Model):
         related_name="hospitals_hospital_profile"
     )
     name = models.CharField(max_length=255)
+    city = models.CharField(max_length=255, blank=True)
     address = models.CharField(max_length=500, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    image_url = models.URLField(blank=True)
+    hero_image_url = models.URLField(blank=True)
+    is_verified = models.BooleanField(default=False)
+    beds_total = models.PositiveIntegerField(default=0)
+    beds_available = models.PositiveIntegerField(default=0)
+    specialties_count = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return self.name

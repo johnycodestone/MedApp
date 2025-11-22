@@ -1,0 +1,27 @@
+{#
+  Stats/KPI Block
+  Purpose:
+    - Displays a compact set of KPIs with optional icons.
+
+  Inputs:
+    - stats: list of objects { label, value, icon } (icon is optional)
+    - title: optional heading above the stats
+#}
+
+<section class="c-stats">
+  {% if title %}
+    <h4 class="c-stats__title">{{ title }}</h4>
+  {% endif %}
+
+  <div class="c-stats__row">
+    {% for s in stats %}
+      <div class="c-stats__item">
+        {% if s.icon %}
+          <span class="c-stats__icon" aria-hidden="true">{{ s.icon }}</span>
+        {% endif %}
+        <span class="c-stats__label">{{ s.label }}</span>
+        <span class="c-stats__value">{{ s.value }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>

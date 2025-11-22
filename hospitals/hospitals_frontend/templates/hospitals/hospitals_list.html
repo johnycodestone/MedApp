@@ -1,0 +1,61 @@
+<!-- {# 
+  File: hospitals/hospitals_frontend/templates/hospitals_list.html
+
+  Purpose:
+    - App-level page that renders a responsive grid of hospitals.
+    - Reuses root-level components (breadcrumbs, filters, pagination, shared card).
+
+  Expectations:
+    - Context variables provided by the view:
+      - hospitals: iterable of hospital objects with common display fields
+      - crumbs: breadcrumb items
+      - filters: filter chip data
+      - show_search: boolean to toggle search box in filters
+      - page_obj: Django paginator object if pagination is used
+
+  Notes:
+    - This template extends the global base layout.
+    - It loads app-specific CSS/JS via block tags without altering global setup.
+#} -->
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Hospitals – MedApp{% endblock %}
+
+{% block styles %}
+  {# App-specific styles ensure local overrides without affecting other apps #}
+  <link rel="stylesheet" href="{% static 'hospitals_frontend/css/hospitals.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container my-4">
+    {# Root-level reusable components for consistent navigation and filtering #}
+    {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+    {% include "includes/filters.html" with filters=filters show_search=show_search %}
+
+    <section aria-label="Hospitals">
+      <div class="hospital-grid" aria-live="polite">
+        {# Render either hospital cards or a user-friendly empty state #}
+        {% for hospital in hospitals %}
+          {% include "hospitals/includes/hospital_card.html" with hospital=hospital %}
+        {% empty %}
+          <div class="text-center py-5">
+            <p class="text-muted mb-3">No hospitals match your filters.</p>
+            <a href="#" class="btn btn-primary">Clear filters</a>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# Root-level pagination for consistent paging controls across apps #}
+    {% if page_obj %}
+      {% include "includes/pagination.html" %}
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  {# App-specific interactions loaded after global shared scripts from base.html #}
+  <script src="{% static 'hospitals_frontend/js/hospitals.js' %}" defer></script>
+{% endblock %}

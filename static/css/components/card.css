@@ -1,0 +1,114 @@
+/* 
+  Card Component Styles
+  Scope:
+    - All classes prefixed with .c-card to avoid collisions.
+  Accessibility:
+    - Focus-visible ring to support keyboard navigation.
+  Interactions:
+    - Subtle hover lift and shadow, image sheen on hover.
+*/
+
+.c-card {
+  position: relative;
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  transition: transform 200ms ease, box-shadow 200ms ease, outline 200ms ease;
+  overflow: hidden;
+}
+
+.c-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+}
+
+.c-card:focus-within {
+  outline: 2px solid var(--focus, #3b82f6);
+  outline-offset: 2px;
+}
+
+.c-card__link {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  text-decoration: none;
+  color: inherit;
+}
+
+.c-card__media {
+  position: relative;
+}
+
+.c-card__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: saturate(1.05);
+  transition: transform 300ms ease, filter 300ms ease;
+}
+
+.c-card:hover .c-card__image {
+  transform: scale(1.02);
+  filter: saturate(1.1);
+}
+
+.c-card__badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.c-card__body {
+  padding: 12px 14px 14px;
+}
+
+.c-card__title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.c-card__subtitle {
+  margin: 0 0 10px;
+  color: #6b7280;
+  font-size: 0.92rem;
+}
+
+.c-card__kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.c-card__kpi {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.c-card__kpi-label {
+  font-weight: 600;
+}
+
+/* Skeleton variant */
+.c-card--skeleton {
+  background: var(--surface, #fff);
+}
+
+.c-card--skeleton .c-card__body {
+  padding: 12px 14px 16px;
+}
+
+/* Responsive image helpers (used via utilities) */
+.u-ratio-16x9 {
+  aspect-ratio: 16 / 9;
+}
+
+.u-img-cover {
+  object-fit: cover;
+  border-radius: 0;
+}

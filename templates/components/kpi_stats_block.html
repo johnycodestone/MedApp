@@ -1,0 +1,35 @@
+<!-- {#
+  Component: kpi_stats_block.html
+  Purpose:
+    - Render a horizontal or grid-aligned KPI block for dashboards.
+    - Suitable for hospitals (beds, occupancy), doctors (on-call, cases), patients (upcoming).
+  Expected context:
+    - kpis: list of dict-like items, each KPI may include:
+        - label: text label (required)
+        - value: main value (required)
+        - icon: optional emoji/icon (e.g., 🛏️, ⚕️)
+        - trend: optional small string for delta (e.g., "+3%", "–2")
+        - hint: optional tooltip text (non-interactive; shown as small muted text)
+    - layout: optional string to influence layout (e.g., "row", "grid"); defaults to row.
+  Styling:
+    - Reuses stats_block.css for visual consistency.
+    - Apps can add local CSS to adjust spacing/columns without editing this file.
+#} -->
+
+<div class="kpi-block {% if layout %}kpi-{{ layout }}{% else %}kpi-row{% endif %}" role="group" aria-label="Key performance indicators">
+  {% for kpi in kpis %}
+    <div class="kpi-item">
+      {% if kpi.icon %}<span class="kpi-icon" aria-hidden="true">{{ kpi.icon }}</span>{% endif %}
+      <div class="kpi-content">
+        <div class="kpi-label">{{ kpi.label }}</div>
+        <div class="kpi-value">
+          <span class="kpi-main">{{ kpi.value }}</span>
+          {% if kpi.trend %}<span class="kpi-trend">{{ kpi.trend }}</span>{% endif %}
+        </div>
+        {% if kpi.hint %}<div class="kpi-hint text-muted">{{ kpi.hint }}</div>{% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="kpi-empty text-muted">No KPIs available</div>
+  {% endfor %}
+</div>

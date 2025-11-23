@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+<!-- {#
+  Page: Hospital dashboard
+  Purpose:
+    - Main landing page for authenticated hospital users.
+    - Renders KPIs, quick actions, and recent summaries (appointments, doctors, departments, reports).
+  Context expectations:
+    - user: current authenticated user (for greetings if desired)
+    - crumbs: breadcrumb items
+    - actions: list for quick actions (label, icon, href or url_name/url_arg, variant)
+    - kpis: list of KPI dicts (label, value, icon?, trend?, hint?)
+    - appointments: iterable of appointment items or empty
+    - doctors: iterable of doctor duty items or empty
+    - departments: iterable of department items or empty
+    - reports: iterable of report/analytics items or empty
+  Styling and scripts:
+    - Loads app-level dashboard.css and dashboard.js from global static/css and static/js.
+#} -->
+
+{% block title %}Hospital Dashboard – MedApp{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container my-4">
+    {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+
+    {# KPI row: shared root-level component #}
+    <section aria-label="Key performance indicators" class="mb-4">
+      {% include "components/kpi_stats_block.html" with kpis=kpis layout='row' %}
+    </section>
+
+    {# Quick actions: app-level wrapper (keeps hospital-specific defaults) #}
+    <section aria-label="Quick actions" class="mb-4">
+      {% include "hospitals/includes/quick_actions.html" with actions=actions %}
+    </section>
+
+    {# Summaries grid #}
+    <section aria-label="Recent activity">
+      <div class="row g-4">
+        <div class="col-12 col-lg-6">
+          {% include "hospitals/includes/appointments_summary.html" with appointments=appointments %}
+        </div>
+        <div class="col-12 col-lg-6">
+          {% include "hospitals/includes/doctors_summary.html" with doctors=doctors %}
+        </div>
+        <div class="col-12 col-lg-6">
+          {% include "hospitals/includes/departments_summary.html" with departments=departments %}
+        </div>
+        <div class="col-12 col-lg-6">
+          {% include "hospitals/includes/reports_summary.html" with reports=reports %}
+        </div>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/dashboard.js' %}" defer></script>
+{% endblock %}

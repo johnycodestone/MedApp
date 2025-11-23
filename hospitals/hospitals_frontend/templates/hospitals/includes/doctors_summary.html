@@ -1,0 +1,26 @@
+<!-- {#
+  Include: Doctors summary
+  Purpose:
+    - Show duty coverage, on-call, or featured doctors in a compact list.
+  Context expectations:
+    - doctors: iterable of items with title, subtitle?, image_url?, badges?, kpis?, href? or url_name/url_arg?
+#} -->
+
+<section class="panel">
+  <header class="panel-header">
+    <h2 class="panel-title">Doctors On Duty</h2>
+    <p class="panel-subtitle text-muted">Current coverage and on-call status</p>
+  </header>
+
+  <div class="panel-body">
+    {% if doctors %}
+      <div class="mini-grid">
+        {% for doc in doctors %}
+          {% include "components/mini_card.html" with item=doc title=doc.title subtitle=doc.subtitle image_url=doc.image_url badges=doc.badges kpis=doc.kpis href=doc.href url_name=doc.url_name url_arg=doc.url_arg aria_label=doc.aria_label target=doc.target %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "components/empty_state.html" with title="No duty assignments" message="Assign doctors to departments or shifts to ensure coverage." icon="⚕️" action_label="Manage doctors" url_name="doctors:doctor-list" %}
+    {% endif %}
+  </div>
+</section>

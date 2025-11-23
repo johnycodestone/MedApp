@@ -1,0 +1,62 @@
+<!-- {#
+  Component: quick_actions.html
+  Purpose:
+    - Render a panel of prominent action buttons (e.g., Manage Appointments, Assign Duty).
+    - Designed for dashboards across apps (hospitals, doctors, patients).
+  Expected context:
+    - actions: a list of dict-like objects for each button. Each item can provide:
+        - label: visible text for the button (required)
+        - icon: small emoji or icon character (optional)
+        - aria_label: accessibility label for screen readers (optional, falls back to label)
+        - variant: visual style hint (e.g., "primary", "secondary", "danger") (optional)
+        - href: direct link (optional)
+        - url_name: Django URL pattern name (optional, used if href is not provided)
+        - url_arg: optional single positional argument for reversing url_name
+    - If both href and url_name are missing, the button will render disabled for clarity.
+
+  Styling:
+    - Inherits root-level styles via interactions.css and base.css.
+    - Apps may add local CSS to refine spacing or variants without editing this file.
+#} -->
+
+<div class="qa-panel" role="group" aria-label="Quick actions">
+  <ul class="qa-list">
+    {% for action in actions %}
+      {# Determine link target: prefer explicit href, otherwise reverse url_name if provided #}
+      {% if action.href %}
+        {% with link=action.href %}
+          <li class="qa-item">
+            <a class="qa-button {% if action.variant %}qa-{{ action.variant }}{% else %}qa-primary{% endif %}"
+               href="{{ link }}"
+               aria-label="{{ action.aria_label|default:action.label }}">
+              {% if action.icon %}<span class="qa-icon">{{ action.icon }}</span>{% endif %}
+              <span class="qa-label">{{ action.label }}</span>
+            </a>
+          </li>
+        {% endwith %}
+      {% elif action.url_name %}
+        <li class="qa-item">
+          <a class="qa-button {% if action.variant %}qa-{{ action.variant }}{% else %}qa-primary{% endif %}"
+             href="{% if action.url_arg %}{% url action.url_name action.url_arg %}{% else %}{% url action.url_name %}{% endif %}"
+             aria-label="{{ action.aria_label|default:action.label }}">
+            {% if action.icon %}<span class="qa-icon">{{ action.icon }}</span>{% endif %}
+            <span class="qa-label">{{ action.label }}</span>
+          </a>
+        </li>
+      {% else %}
+        {# Fallback: render a disabled button if no navigation target is available #}
+        <li class="qa-item">
+          <button class="qa-button qa-disabled" type="button" disabled aria-disabled="true">
+            {% if action.icon %}<span class="qa-icon">{{ action.icon }}</span>{% endif %}
+            <span class="qa-label">{{ action.label }}</span>
+          </button>
+        </li>
+      {% endif %}
+    {% empty %}
+      {# No actions provided; component renders nothing or a minimal notice #}
+      <li class="qa-item">
+        <span class="text-muted">No actions available</span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>

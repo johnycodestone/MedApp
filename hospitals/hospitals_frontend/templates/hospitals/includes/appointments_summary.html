@@ -1,0 +1,26 @@
+<!-- {#
+  Include: Appointments summary
+  Purpose:
+    - Show recent or upcoming hospital appointments in a compact list.
+  Context expectations:
+    - appointments: iterable of items with title, subtitle?, image_url?, badges?, kpis?, href? or url_name/url_arg?
+#} -->
+
+<section class="panel">
+  <header class="panel-header">
+    <h2 class="panel-title">Recent Appointments</h2>
+    <p class="panel-subtitle text-muted">Upcoming and in-progress appointments</p>
+  </header>
+
+  <div class="panel-body">
+    {% if appointments %}
+      <div class="mini-grid">
+        {% for appt in appointments %}
+          {% include "components/mini_card.html" with item=appt title=appt.title subtitle=appt.subtitle image_url=appt.image_url badges=appt.badges kpis=appt.kpis href=appt.href url_name=appt.url_name url_arg=appt.url_arg aria_label=appt.aria_label target=appt.target %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "components/empty_state.html" with title="No upcoming appointments" message="You're all caught up. Create or assign appointments to get started." icon="📅" action_label="Manage appointments" url_name="appointments:appointment-list" %}
+    {% endif %}
+  </div>
+</section>

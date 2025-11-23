@@ -1,0 +1,116 @@
+/*
+  File: static/css/dashboard.css
+
+  Purpose:
+    - App-level layout and spacing for the hospitals dashboard.
+    - Non-invasive: relies on global styles (tokens.css, card.css, interactions.css, stats_block.css).
+    - Provides grid, panel, and minor utility styles used by dashboard.html and its includes.
+
+  Notes:
+    - Keep selectors scoped to dashboard context to avoid side effects across apps.
+    - Minimal specificity; prefer class-based utilities over element tags.
+*/
+
+/* Container spacing for dashboard sections */
+.container.my-4 {
+  /* Ensure consistent vertical rhythm across sections */
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Panel scaffold (used by appointments/doctors/departments/reports summaries) */
+.panel {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.06));
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.panel-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.panel-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Panel body wraps content (mini cards, empty states) */
+.panel-body {
+  padding: 1rem 1.25rem;
+}
+
+/* Grid for compact cards inside summaries */
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 576px) {
+  .mini-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 992px) {
+  .mini-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Quick actions wrapper (non-intrusive, leaves root component styling intact) */
+.hosp-quick-actions {
+  padding: 0.5rem 0;
+}
+
+/* KPI block spacing refinements */
+.kpi-block {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.kpi-item {
+  /* Make individual KPI items align nicely in row layout */
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Empty state harmony inside panels */
+.empty-state {
+  text-align: center;
+  padding: 1rem 0.75rem;
+}
+
+.empty-state-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.empty-state-title {
+  margin: 0.25rem 0;
+}
+
+.empty-state-message {
+  margin: 0.25rem 0 0.75rem 0;
+}
+
+/* Minor utility for muted text (compatible with existing tokens) */
+.text-muted {
+  color: var(--text-muted, #6b7280);
+}

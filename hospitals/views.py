@@ -4,6 +4,27 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.generic import ListView, DetailView
 from .models import Hospital
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
+from django.urls import reverse, NoReverseMatch
+
+def build_action(label, icon=None, url_name=None, url_arg=None, variant=None, aria_label=None, href=None):
+    """
+    Build a robust quick action dict. Prefer resolving URL names to href in Python.
+    If reverse fails, leaves href as None so the template renders a disabled button.
+    """
+    if href is None and url_name:
+        try:
+            href = reverse(url_name, args=[url_arg]) if url_arg is not None else reverse(url_name)
+        except NoReverseMatch:
+            href = None  # Template will gracefully render a disabled button
+    return {
+        "label": label,
+        "icon": icon,
+        "variant": variant,
+        "aria_label": aria_label or label,
+        "href": href,
+    }
 
 # -------------------------------------------------------------------
 # Basic CRUD stubs (can be expanded later)
@@ -189,3 +210,33 @@ class HospitalsDetailPageView(DetailView):
         # Related departments (if any)
         context["departments"] = getattr(hospital, "departments", None)
         return context
+
+
+class HospitalDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = "hospitals/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            "crumbs": [
+                {"label": "Home", "href": "/"},
+                {"label": "Hospitals", "href": "/hospitals/"},
+                {"label": "Dashboard", "href": None},
+            ],
+            "actions": [
+                {"label": "Manage Appointments", "icon": "📅", "url_name": "appointments:appointment-list", "variant": "primary"},
+                {"label": "Manage Doctors", "icon": "⚕️", "url_name": "doctors:doctor-list", "variant": "secondary"},
+                {"label": "Manage Departments", "icon": "🏥", "url_name": "departments:page-list"},
+                {"label": "View Reports", "icon": "📊", "url_name": "reports:dashboard"},
+            ],
+            "kpis": [
+                {"label": "Beds Available", "value": "34", "icon": "🛏️", "trend": "+2"},
+                {"label": "Occupancy", "value": "78%", "icon": "📈", "hint": "Goal: < 85%"},
+                {"label": "Admissions Today", "value": "12", "icon": "🧾"},
+            ],
+            "appointments": [],
+            "doctors": [],
+            "departments": [],
+            "reports": [],
+        })
+        return ctx

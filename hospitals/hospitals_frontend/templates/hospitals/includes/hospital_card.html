@@ -18,16 +18,13 @@
     - Safe and minimal: no invalid [] or {} syntax in template.
 #} -->
 
+<!-- {#
+  Implementation note:
+    - Initially, multi-line with inline comments caused raw text to appear in the frontend.
+    - Resolution: collapse the include into a single line without inline comments.
+    - This ensures Django parses the tag correctly and avoids rendering issues.
+    - Keep this history documented so future teammates understand why the single-line format is required.
+#} -->
 
-<!-- {% include "components/card.html" with
-    item=hospital
-    url_name="hospitals:page-detail"       # URL pattern name for hospital detail view
-    url_arg=hospital.id                    # Primary key for reversing URL
-    title=hospital.name                    # Card title
-    subtitle=hospital.city                 # Optional subtitle (city)
-    image_url=hospital.image_url           # Optional image
-    badges=hospital.badges                 # Precomputed badges list
-    kpis=hospital.kpis                     # Precomputed KPIs list
-    aria_label="View hospital details"     # Accessibility label for screen readers
-    target="_self"                         # Link target (default same tab)
-%} -->
+{% include "components/card.html" with item=hospital url_name="hospitals:page-detail" url_arg=hospital.id title=hospital.name subtitle=hospital.city image_url=hospital.image_url badges=hospital.badges kpis=hospital.kpis aria_label="View hospital details" target="_self" %}
+

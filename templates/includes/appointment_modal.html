@@ -1,0 +1,38 @@
+<!-- templates/includes/appointment_modal.html -->
+<div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="appointment-form" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="appointmentModalLabel">Book Appointment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" name="doctor" value="{{ doctor.id }}">
+
+          <div class="mb-3">
+            <label for="slot" class="form-label">Select a time:</label>
+            <select name="scheduled_time" id="slot" class="form-select" required>
+              {% for slot in available_slots %}
+                <option value="{{ slot|date:'Y-m-d H:i:s' }}">
+                  {{ slot|date:'D, M d — h:i A' }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="reason" class="form-label">Reason (optional):</label>
+            <textarea name="reason" id="reason" class="form-control"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Confirm Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

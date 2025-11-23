@@ -1,13 +1,43 @@
-<div class="doctor-card">
-  <h3>Dr. {{ doctor.user.first_name }} {{ doctor.user.last_name }}</h3>
-  <p><strong>Specialization:</strong> {{ doctor.specialization }}</p>
-  <p><strong>Experience:</strong> {{ doctor.experience_years }} years</p>
-  <p><strong>Qualification:</strong> {{ doctor.qualification }}</p>
-  <p><strong>Rating:</strong> {{ doctor.rating }}</p>
-  <p>{{ doctor.bio|truncatewords:25 }}</p>
+<!-- doctors/templates/components/DoctorCard.html -->
+<div class="card doctor-card shadow-sm h-100">
+  <div class="card-body">
+    <h5 class="card-title">
+      Dr. {{ doctor.user.first_name }} {{ doctor.user.last_name }}
+    </h5>
 
-  <div class="card-actions">
-    <a href="{% url 'doctors:doctor-profile' %}?id={{ doctor.id }}" class="btn">View Profile</a>
-    <a href="{% url 'appointments:list' %}?doctor={{ doctor.id }}" class="btn outline">Book Now</a>
+    <p class="card-text">
+      <strong>Specialization:</strong> {{ doctor.specialization }}
+    </p>
+    <p class="card-text">
+      <strong>Experience:</strong> {{ doctor.experience_years }} years
+    </p>
+
+    {% if doctor.qualification %}
+      <p class="card-text">
+        <strong>Qualification:</strong> {{ doctor.qualification }}
+      </p>
+    {% endif %}
+
+    {% if doctor.rating %}
+      <p class="card-text">
+        <strong>Rating:</strong> {{ doctor.rating }}
+      </p>
+    {% endif %}
+
+    <p class="card-text text-muted">
+      {{ doctor.bio|truncatewords:25 }}
+    </p>
+
+    <div class="d-flex gap-2 mt-3">
+      <a href="{% url 'doctors:doctor-detail' id=doctor.user.id %}"
+         class="btn btn-primary btn-sm">
+        View Profile
+      </a>
+      <a href="{% url 'doctors:doctor-list' %}?doctor={{ doctor.id }}"
+          class="btn btn-outline-secondary btn-sm">
+          Book Now
+      </a>
+
+    </div>
   </div>
 </div>

@@ -1,0 +1,12 @@
+{#
+  hospital_stats.html
+  Purpose:
+    - App-level wrapper around root-level stats_block.html with default title.
+    - Keeps hospitals-specific naming while delegating rendering to shared component.
+
+  Inputs:
+    - stats: list of { label, value, icon } objects
+    - title: optional string title
+#}
+
+{% include "components/stats_block.html" with stats=stats title=title %}

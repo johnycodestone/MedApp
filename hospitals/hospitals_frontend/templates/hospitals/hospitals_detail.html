@@ -1,0 +1,79 @@
+{#
+  hospitals_detail.html
+  Purpose:
+    - Hospital detail view with hero banner, badges, and KPI stats.
+    - Reuses root-level components (badge.html, stats_block.html) and image helpers.
+
+  Expected context:
+    - hospital: object with fields like name, address, phone, image_url, hero_image_url, is_verified, description
+    - stats: list of { label, value, icon } for KPIs (beds, occupancy, departments, doctors)
+    - crumbs: breadcrumb items (optional)
+    - departments: related departments (optional); include app-level department cards if needed
+
+  Safety:
+    - All classes are namespaced and use shared utilities; no global overrides.
+#}
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ hospital.name }} – Hospital Details{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'hospitals_frontend/css/hospitals.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container my-4">
+    {% if crumbs %}
+      {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+    {% endif %}
+
+    <section class="hosp-hero" aria-label="Hospital">
+      <div class="hosp-hero__media">
+        <img
+          src="{{ hospital.hero_image_url|default:hospital.image_url }}"
+          alt="{{ hospital.name }}"
+          class="hosp-hero__image u-img-cover u-ratio-21x9"
+          loading="lazy"
+        >
+        <div class="hosp-hero__overlay">
+          <h1 class="hosp-hero__title">{{ hospital.name }}</h1>
+          <p class="hosp-hero__meta">
+            {{ hospital.address }}{% if hospital.phone %} • {{ hospital.phone }}{% endif %}
+          </p>
+          {% if hospital.is_verified %}
+            {% include "components/badge.html" with label="PMC Verified" variant="success" %}
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="hosp-section">
+      {% include "hospitals_frontend/templates/includes/hospital_stats.html" with stats=stats title="Key metrics" %}
+    </section>
+
+    {% if hospital.description %}
+      <section class="hosp-section">
+        <h2 class="hosp-section__title">About</h2>
+        <p class="hosp-section__text">{{ hospital.description }}</p>
+      </section>
+    {% endif %}
+
+    {% if departments %}
+      <section class="hosp-section">
+        <h2 class="hosp-section__title">Departments</h2>
+        <div class="hospital-grid">
+          {% for dept in departments %}
+            {# Example reuse: if you have a department card partial, include it here #}
+            {% include "departments_frontend/templates/includes/department_card.html" with dept=dept %}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'hospitals_frontend/js/hospitals.js' %}" defer></script>
+{% endblock %}

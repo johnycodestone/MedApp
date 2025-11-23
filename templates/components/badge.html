@@ -1,0 +1,13 @@
+{#
+  Badge Component
+  Purpose:
+    - Reusable pill-style badge with semantic color variants.
+
+  Inputs:
+    - label: text content inside the badge (required)
+    - variant: one of ["info", "success", "warning", "danger", "neutral"] (optional; defaults to "neutral")
+#}
+
+{% with v=variant|default:'neutral' %}
+  <span class="c-badge c-badge--{{ v }}">{{ label }}</span>
+{% endwith %}

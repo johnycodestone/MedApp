@@ -1,0 +1,33 @@
+<!-- {#
+  hospital_card.html
+  Purpose:
+    - App-level include that wraps the root shared card component.
+    - Receives a single `hospital` object from the list view.
+    - Uses precomputed attributes (`hospital.badges`, `hospital.kpis`) prepared in views.py.
+    - Keeps template logic simple: only loops and conditionals, no complex Python-like syntax.
+
+  Expected input:
+    - hospital: Hospital model instance with fields:
+        - id, name, city, image_url, is_verified, beds_total, beds_available, specialties_count
+    - hospital.badges: list of dicts { label, variant } (built in view)
+    - hospital.kpis: list of dicts { label, value } (built in view)
+
+  Notes:
+    - This file delegates rendering to the root-level card.html component.
+    - All heavy lifting (badges, KPIs) is done in the view, so template stays clean.
+    - Safe and minimal: no invalid [] or {} syntax in template.
+#} -->
+
+
+<!-- {% include "components/card.html" with
+    item=hospital
+    url_name="hospitals:page-detail"       # URL pattern name for hospital detail view
+    url_arg=hospital.id                    # Primary key for reversing URL
+    title=hospital.name                    # Card title
+    subtitle=hospital.city                 # Optional subtitle (city)
+    image_url=hospital.image_url           # Optional image
+    badges=hospital.badges                 # Precomputed badges list
+    kpis=hospital.kpis                     # Precomputed KPIs list
+    aria_label="View hospital details"     # Accessibility label for screen readers
+    target="_self"                         # Link target (default same tab)
+%} -->

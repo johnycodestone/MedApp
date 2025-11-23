@@ -1,0 +1,50 @@
+/*
+  Badge Styles
+  Variants: neutral, info, success, warning, danger
+  Pill shapes with accessible contrast.
+*/
+
+.c-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+
+/* Neutral */
+.c-badge--neutral {
+  background: #f3f4f6;
+  color: #111827;
+  border-color: #e5e7eb;
+}
+
+/* Info */
+.c-badge--info {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+/* Success */
+.c-badge--success {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+
+/* Warning */
+.c-badge--warning {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+
+/* Danger */
+.c-badge--danger {
+  background: #fef2f2;
+  color: #7f1d1d;
+  border-color: #fca5a5;
+}

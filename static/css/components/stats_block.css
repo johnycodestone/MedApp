@@ -1,0 +1,46 @@
+/*
+  Stats/KPI Block
+  Row-based layout with optional icons.
+*/
+
+.c-stats {
+  margin: 16px 0;
+}
+
+.c-stats__title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.c-stats__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.c-stats__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-muted, #f9fafb);
+  border: 1px solid #e5e7eb;
+}
+
+.c-stats__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.c-stats__label {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.c-stats__value {
+  color: #111827;
+  font-weight: 600;
+}

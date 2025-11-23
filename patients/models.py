@@ -5,6 +5,7 @@ from django.db import models
 from django.db import models
 from django.conf import settings
 
+
 # PatientProfile: one-to-one with auth User (core.User in your core app)
 class PatientProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='patients_patient_profile')

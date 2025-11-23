@@ -1,15 +1,35 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Find a Doctor{% endblock %}
+
 {% block content %}
+<div class="container my-4">
 
-<h1>Find a Doctor</h1>
+  {# Breadcrumbs for navigation context #}
+  {% include 'includes/breadcrumbs.html' with crumbs=crumbs %}
 
-{% include 'components/DoctorFilter.html' %}
+  {# Doctor-specific filter form (search, specialization, experience, rating) #}
+  {% include 'components/DoctorFilter.html' %}
 
-<div id="doctor-list" class="doctor-list">
-  {% for doctor in doctors %}
-    {% include 'components/DoctorCard.html' %}
-  {% endfor %}
+  {# Doctor cards grid #}
+  <div id="doctor-list" class="row doctor-list" aria-live="polite">
+    {% for doctor in doctors %}
+      <div class="col-md-4 mb-4">
+        {% include 'components/DoctorCard.html' %}
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <p class="text-muted text-center">No doctors found.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  {# Pagination controls #}
+  {% include 'includes/pagination.html' %}
 </div>
+{% endblock %}
 
-<script src="{% static 'doctor/js/doctor.js' %}"></script>
+{% block scripts %}
+<script src="{% static 'doctors/js/doctor.js' %}"></script>
 {% endblock %}

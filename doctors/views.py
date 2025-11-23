@@ -1,33 +1,28 @@
-#from django.shortcuts import render
-#
-## Create your views here.
-#
-## doctors/views.py
-#
-#from django.http import HttpResponse
-#
-#def doctor_profile(request):
-#    return HttpResponse("Doctor Profile Page")
-#
-#def doctor_availability(request):
-#    return HttpResponse("Doctor Availability Page")
+# doctors/views.py
+from django.views.generic import ListView
+from django.db.models import Q
+from django.views import View
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
+
+from datetime import timedelta, datetime
+
+from .models import DoctorProfile, SPECIALIZATION_CHOICES
 from .serializers import DoctorProfileSerializer, TimetableSerializer, PrescriptionSerializer
-from django.views.generic import ListView
-from django.db.models import Q
-from .models import DoctorProfile
-from django.views import View
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth import get_user_model
 from appointments.models import Appointment, AppointmentStatus
-from datetime import datetime, timedelta
 from .services import (
     ensure_doctor_profile, manage_timetable, get_timetable,
     cancel_patient_appointment, give_prescription, get_doctor_prescriptions
 )
+
+# ---------------------------
+# Section A: API Views
+# ---------------------------
 
 class DoctorProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -35,6 +30,7 @@ class DoctorProfileView(APIView):
     def get(self, request):
         profile = ensure_doctor_profile(request.user)
         return Response(DoctorProfileSerializer(profile).data)
+
 
 class TimetableView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -48,6 +44,7 @@ class TimetableView(APIView):
         tt = get_timetable(request.user)
         return Response(TimetableSerializer(tt).data if tt else {}, status=status.HTTP_200_OK)
 
+
 class CancelAppointmentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -56,6 +53,7 @@ class CancelAppointmentView(APIView):
         reason = request.data.get("reason", "")
         cancel_patient_appointment(request.user, appointment_id, reason)
         return Response({"status": "Appointment cancelled"}, status=status.HTTP_200_OK)
+
 
 class PrescriptionView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -71,39 +69,52 @@ class PrescriptionView(APIView):
         return Response(PrescriptionSerializer(prescriptions, many=True).data)
 
 
+# ---------------------------
+# Section B: Frontend HTML Views
+# ---------------------------
 
 class DoctorListView(ListView):
-    template_name = "doctors/doctor_list.html"
+    """
+    HTML page: Doctors list with filters and pagination.
+    """
+    model = DoctorProfile
     context_object_name = "doctors"
-    paginate_by = 12  # adjust if your components expect different
+    template_name = "doctors/doctor_list.html"
+    paginate_by = 10
 
     def get_queryset(self):
-        qs = DoctorProfile.objects.select_related("user").all()
+        qs = (
+            DoctorProfile.objects
+            .select_related("user")
+            .all()
+        )
+        params = self.request.GET
 
-        # Basic filters aligned with your model
-        q = self.request.GET.get("q", "").strip()
-        specialization = self.request.GET.get("specialization", "").strip()
-        min_exp = self.request.GET.get("min_exp", "").strip()
-        min_rating = self.request.GET.get("min_rating", "").strip()
-
+        # Text search: name, bio, qualification
+        q = (params.get("q") or "").strip()
         if q:
             qs = qs.filter(
                 Q(user__first_name__icontains=q) |
                 Q(user__last_name__icontains=q) |
-                Q(specialization__icontains=q) |
-                Q(qualification__icontains=q) |
-                Q(bio__icontains=q)
+                Q(bio__icontains=q) |
+                Q(qualification__icontains=q)
             )
 
+        # Specialization filter (key must match choices exactly)
+        specialization = (params.get("specialization") or "").strip()
         if specialization:
-            qs = qs.filter(specialization__icontains=specialization)
+            qs = qs.filter(specialization=specialization)
 
-        if min_exp.isdigit():
-            qs = qs.filter(experience_years__gte=int(min_exp))
+        # Minimum experience filter
+        min_exp_raw = (params.get("min_exp") or "").strip()
+        if min_exp_raw.isdigit():
+            qs = qs.filter(experience_years__gte=int(min_exp_raw))
 
+        # Minimum rating filter
+        min_rating_raw = (params.get("min_rating") or "").strip()
         try:
-            if min_rating:
-                qs = qs.filter(rating__gte=float(min_rating))
+            if min_rating_raw:
+                qs = qs.filter(rating__gte=float(min_rating_raw))
         except ValueError:
             pass
 
@@ -112,40 +123,55 @@ class DoctorListView(ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         params = self.request.GET.copy()
+
+        # Current filter values for form
         ctx["filters"] = {
             "q": params.get("q", ""),
             "specialization": params.get("specialization", ""),
             "min_exp": params.get("min_exp", ""),
             "min_rating": params.get("min_rating", ""),
         }
-        # If your components need dropdown data (e.g., specializations list), we’ll wire them after seeing components/DoctorFilter.html
+
+        # Pass specialization choices (key, label) to template for dynamic dropdown
+        ctx["specializations"] = SPECIALIZATION_CHOICES
+
+        # Breadcrumbs
+        ctx["crumbs"] = [
+            {"label": "Home", "url": "/"},
+            {"label": "Doctors", "url": None},
+        ]
         return ctx
-
-
 
 
 User = get_user_model()
 
 class DoctorDetailView(View):
+    """
+    HTML page: Doctor detail with available slots for booking.
+    """
     def get(self, request, id):
         doctor = get_object_or_404(User, id=id)
         profile = getattr(doctor, "doctors_doctor_profile", None)
 
-        # Fetch available slots for next 7 days
-        today = datetime.now()
+        # Use timezone-aware 'now'
+        today = timezone.now()
         next_week = today + timedelta(days=7)
+
         booked_slots = Appointment.objects.filter(
             doctor=doctor,
             scheduled_time__range=(today, next_week),
             status__in=[AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED]
         ).values_list("scheduled_time", flat=True)
 
-        # Generate hourly slots (e.g., 9am to 5pm)
+        # Generate hourly slots (9am to 5pm) for next 7 days
         slots = []
         for day in range(7):
             date = today + timedelta(days=day)
-            for hour in range(9, 17):  # 9am to 5pm
-                slot_time = datetime(date.year, date.month, date.day, hour)
+            for hour in range(9, 17):
+                slot_time = timezone.make_aware(
+                    datetime(date.year, date.month, date.day, hour),
+                    timezone.get_current_timezone()
+                )
                 if slot_time not in booked_slots:
                     slots.append(slot_time)
 
@@ -153,5 +179,10 @@ class DoctorDetailView(View):
             "doctor": doctor,
             "profile": profile,
             "available_slots": slots,
+            "crumbs": [
+                {"label": "Home", "url": "/"},
+                {"label": "Doctors", "url": "/doctors/"},
+                {"label": f"Dr. {doctor.get_full_name()}", "url": None},
+            ],
         }
         return render(request, "doctors/doctor_detail.html", context)

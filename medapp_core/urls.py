@@ -12,6 +12,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import render
 from django.views.generic import TemplateView
+from django.contrib.auth import views as auth_views
 
 # Development-only static/media serving helpers
 from django.conf import settings
@@ -20,6 +21,8 @@ from django.conf.urls.static import static
 # Simple homepage view (keeps your original behavior)
 def home_view(request):
     return render(request, 'pages/home.html')
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -44,6 +47,8 @@ urlpatterns = [
     # Optional: DRF login/logout for the browsable API (useful during development).
     # This is safe to include and only affects the browsable API UI.
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+   
 ]
 
 # Serve media (and optionally static) files during development.

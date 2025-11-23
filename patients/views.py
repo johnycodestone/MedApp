@@ -35,7 +35,6 @@ def dashboard_view(request):
     return render(request, 'patients/dashboard.html', context)
 
 
-
 class PatientProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 

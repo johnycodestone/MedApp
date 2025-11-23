@@ -1,7 +1,48 @@
-<form method="get" class="doctor-filter-form">
-  <input type="text" name="q" placeholder="Search name, bio, qualification" value="{{ filters.q }}">
-  <input type="text" name="specialization" placeholder="Specialization" value="{{ filters.specialization }}">
-  <input type="number" name="min_exp" placeholder="Min experience" value="{{ filters.min_exp }}">
-  <input type="number" name="min_rating" placeholder="Min rating" step="0.1" value="{{ filters.min_rating }}">
-  <button type="submit">Apply Filters</button>
+<!-- doctors/templates/components/DoctorFilter.html -->
+<form method="get" id="doctor-filter-form" class="doctor-filter-form mb-4">
+
+  {# Search field #}
+  <div class="mb-3">
+    <input type="text"
+           name="q"
+           class="form-control"
+           placeholder="Search name, bio, qualification"
+           value="{{ filters.q }}">
+  </div>
+
+  {# Specialization dropdown (dynamic from SPECIALIZATION_CHOICES) #}
+  <div class="mb-3">
+    <select name="specialization" class="form-select">
+      <option value="">All Specializations</option>
+      {% for key, label in specializations %}
+        <option value="{{ key }}" {% if filters.specialization == key %}selected{% endif %}>
+          {{ label }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  {# Minimum experience #}
+  <div class="mb-3">
+    <input type="number"
+           name="min_exp"
+           class="form-control"
+           placeholder="Min experience (years)"
+           value="{{ filters.min_exp }}">
+  </div>
+
+  {# Minimum rating #}
+  <div class="mb-3">
+    <input type="number"
+           name="min_rating"
+           step="0.1"
+           class="form-control"
+           placeholder="Min rating"
+           value="{{ filters.min_rating }}">
+  </div>
+
+  {# Submit button #}
+  <button type="submit" class="btn btn-primary w-100">
+    Apply Filters
+  </button>
 </form>

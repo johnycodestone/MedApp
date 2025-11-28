@@ -8,7 +8,8 @@ Handles system-wide reporting, statistics, and data exports.
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
-from accounts.models import DoctorProfile, PatientProfile
+from doctors.models import DoctorProfile
+from patients.models import PatientProfile, MedicalRecord
 from appointments.models import Appointment
 from prescriptions.models import Prescription
 from patients.models import MedicalRecord

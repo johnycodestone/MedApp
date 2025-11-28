@@ -1,9 +1,11 @@
-# doctors/models.py
 from django.db import models
 from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-
-# Single source of truth for specialization choices (key, label)
+# -------------------------------
+# Specialization Choices
+# -------------------------------
 SPECIALIZATION_CHOICES = [
     ("cardiology", "Cardiology"),
     ("neurology", "Neurology"),
@@ -27,12 +29,14 @@ SPECIALIZATION_CHOICES = [
     ("family", "Family Medicine / General Practice"),
 ]
 
-
+# -------------------------------
+# Doctor Profile
+# -------------------------------
 class DoctorProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="doctors_doctor_profile",
+        related_name="doctorprofile",
         help_text="Linked account for this doctor"
     )
     specialization = models.CharField(
@@ -71,14 +75,27 @@ class DoctorProfile(models.Model):
         verbose_name_plural = "Doctor profiles"
 
     def __str__(self):
-        return f"Dr. {self.user.get_full_name()} ({self.get_specialization_display()})"
+        return f"Dr. {self.user.get_full_name() or self.user.username} ({self.get_specialization_display()})"
 
     @property
     def specialization_label(self):
         """Human-readable specialization label."""
         return self.get_specialization_display()
 
+    def get_full_name_or_username(self):
+        return self.user.get_full_name() or self.user.username
 
+# -------------------------------
+# Auto-create DoctorProfile when a User is created
+# -------------------------------
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_doctor_profile(sender, instance, created, **kwargs):
+    if created and getattr(instance, "is_doctor", False):
+        DoctorProfile.objects.get_or_create(user=instance)
+
+# -------------------------------
+# Timetable
+# -------------------------------
 class Timetable(models.Model):
     doctor = models.ForeignKey(
         DoctorProfile,
@@ -98,27 +115,9 @@ class Timetable(models.Model):
     def __str__(self):
         return f"Timetable {self.id} for {self.doctor}"
 
-
-class Prescription(models.Model):
-    doctor = models.ForeignKey(
-        DoctorProfile,
-        on_delete=models.CASCADE,
-        related_name="doctor_prescriptions"
-    )
-    patient_id = models.PositiveIntegerField()
-    text = models.TextField()
-    pdf_file = models.FileField(upload_to="prescriptions/", blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-        verbose_name = "Prescription"
-        verbose_name_plural = "Prescriptions"
-
-    def __str__(self):
-        return f"Prescription to patient {self.patient_id} by {self.doctor}"
-
-
+# -------------------------------
+# Appointment Cancellation
+# -------------------------------
 class AppointmentCancellation(models.Model):
     doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE)
     appointment_id = models.PositiveIntegerField()
@@ -132,3 +131,30 @@ class AppointmentCancellation(models.Model):
 
     def __str__(self):
         return f"Cancellation #{self.appointment_id} by {self.doctor}"
+
+# -------------------------------
+# Saved Doctor (Favorites)
+# -------------------------------
+class SavedDoctor(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="saved_doctors"
+    )
+    doctor = models.ForeignKey(
+        DoctorProfile,
+        on_delete=models.CASCADE,
+        related_name="saved_by",
+        null=True, blank=True,   # ✅ must be here
+        help_text="Doctor that the user has saved/favorited"
+    )
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "doctor")
+        ordering = ["-saved_at"]
+        verbose_name = "Saved doctor"
+        verbose_name_plural = "Saved doctors"
+
+    def __str__(self):
+        return f"{self.user} saved {self.doctor}"

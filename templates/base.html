@@ -24,8 +24,7 @@
     <link rel="stylesheet" href="{% static 'css/components/image.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/interactions.css' %}">
 
-
-    <!-- Optional: Bootstrap CSS (CDN) for grid/components) -->
+    <!-- Optional: Bootstrap CSS (CDN) for grid/components -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Page/component-specific CSS -->
@@ -36,7 +35,6 @@
     <!-- Accessibility: skip to main content for keyboard users -->
     <a class="visually-hidden-focusable" href="#main-content">Skip to main content</a>
 
-    <!-- ENHANCED: Modern Navigation Bar -->
     <!-- ENHANCED: Modern Navigation Bar -->
     <nav class="main-nav">
       <div class="nav-container">
@@ -145,7 +143,7 @@
     <main id="main-content" class="medapp-main">
       <!-- ENHANCED: Full-width content (no container constraint for modern pages) -->
       {% block content %}{% endblock %}
-      
+
       <!-- LEGACY: Bootstrap grid layout (for pages that need it) -->
       {% block legacy_content %}
         <div class="container-fluid py-3">
@@ -226,26 +224,22 @@
         }
         
         // Scroll effect for navbar
-        let lastScroll = 0;
         const nav = document.querySelector('.main-nav');
-        
-        window.addEventListener('scroll', () => {
+                window.addEventListener('scroll', () => {
           const currentScroll = window.pageYOffset;
-          
+
           if (currentScroll > 50) {
             nav.classList.add('scrolled');
           } else {
             nav.classList.remove('scrolled');
           }
-          
-          lastScroll = currentScroll;
         });
-        
+
         // Highlight active navigation link
         const currentPath = window.location.pathname;
         document.querySelectorAll('.nav-link a').forEach(link => {
-          if (link.getAttribute('href') === currentPath || 
-              currentPath.startsWith(link.getAttribute('href') + '/')) {
+          const href = link.getAttribute('href');
+          if (href === currentPath || currentPath.startsWith(href + '/')) {
             link.parentElement.classList.add('active');
           }
         });
@@ -255,7 +249,6 @@
     <!-- Shared component scripts (interactions, card reveal) -->
     <script src="{% static 'js/components/interactions.js' %}" defer></script>
     <script src="{% static 'js/components/card.js' %}" defer></script>
-
 
     <!-- Global JS entry (namespace, component registry, auto-mount) -->
     <script src="{% static 'js/base.js' %}"></script>

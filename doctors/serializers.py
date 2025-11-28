@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import DoctorProfile, Timetable, Prescription
+from .models import DoctorProfile, Timetable
+from prescriptions.models import Prescription   # ✅ import from prescriptions app
 
 class DoctorProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,4 +15,4 @@ class TimetableSerializer(serializers.ModelSerializer):
 class PrescriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prescription
-        fields = ["id", "patient_id", "text", "pdf_file", "created_at"]
+        fields = ["id", "appointment", "notes", "created_at"]   # ✅ updated fields

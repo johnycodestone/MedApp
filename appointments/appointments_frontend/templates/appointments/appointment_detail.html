@@ -1,17 +1,28 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<h1>My Appointments</h1>
+<h1>Appointment Details</h1>
 
-{% include 'components/AppointmentFilter.html' %}
+<div class="appointment-detail-card">
+  <p><strong>Date:</strong> {{ appointment.scheduled_time|date:"M d, Y" }}</p>
+  <p><strong>Time:</strong> {{ appointment.scheduled_time|date:"h:i A" }}</p>
+  <p><strong>Reason:</strong> {{ appointment.reason }}</p>
+  <p><strong>Status:</strong> 
+    <span class="badge {{ appointment.status|lower }}">
+      {{ appointment.status|title }}
+    </span>
+  </p>
+  <p><strong>Doctor:</strong> {{ appointment.doctor.get_full_name }}</p>
+  <p><strong>Patient:</strong> {{ appointment.patient.user.get_full_name }}</p>
 
-<div id="appointment-list" class="appointment-list">
-  {% for appointment in appointments %}
-    {% include 'components/AppointmentCard.html' %}
-  {% endfor %}
+  <div class="actions" style="margin-top: 1rem;">
+    <a href="{% url 'appointments:appointment-cancel' appointment.id %}" class="btn btn-danger">
+      Cancel Appointment
+    </a>
+    <a href="{% url 'appointments:appointment-list' %}" class="btn btn-secondary">
+      Back to Appointments
+    </a>
+  </div>
 </div>
 
-{% include 'components/ConfirmationModal.html' %}
-
-<script src="{% static 'appointments/js/appointments.js' %}"></script>
 {% endblock %}

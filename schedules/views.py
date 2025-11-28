@@ -246,6 +246,10 @@ class ScheduleDashboardView(TemplateView):
             status__in=['PENDING', 'CONFIRMED']
         ).order_by('start_time')[:5]
         context['categories'] = ScheduleCategory.objects.all()
+        context['crumbs'] = [
+            {"label": "Home", "url": "/"},
+            {"label": "Schedules", "url": None},
+        ]
         return context
 
 # -------------------------------

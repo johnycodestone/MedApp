@@ -1,0 +1,41 @@
+<!-- {#
+  Component: empty_state.html
+  Purpose:
+    - Provide a consistent, friendly empty state with optional action.
+    - Reusable across dashboards and list pages.
+  Expected context:
+    - title: short heading explaining the empty state (required)
+    - message: supportive copy (optional)
+    - icon: optional emoji/icon for visual emphasis
+    - action_label: text for the CTA button (optional)
+    - href OR url_name/url_arg: navigation target for the CTA (optional)
+    - aria_label: accessibility label for the CTA (optional; falls back to action_label or title)
+  Styling:
+    - Reuses card.css and interactions.css; apps may refine spacing locally.
+#} -->
+
+<div class="empty-state" role="status" aria-live="polite">
+  <div class="empty-state-body">
+    {% if icon %}<div class="empty-state-icon" aria-hidden="true">{{ icon }}</div>{% endif %}
+    <h3 class="empty-state-title">{{ title }}</h3>
+    {% if message %}<p class="empty-state-message text-muted">{{ message }}</p>{% endif %}
+  </div>
+
+  {% if action_label %}
+    <div class="empty-state-actions">
+      {% if href %}
+        <a class="btn btn-primary"
+           href="{{ href }}"
+           aria-label="{{ aria_label|default:action_label }}">
+          {{ action_label }}
+        </a>
+      {% elif url_name %}
+        <a class="btn btn-primary"
+           href="{% if url_arg %}{% url url_name url_arg %}{% else %}{% url url_name %}{% endif %}"
+           aria-label="{{ aria_label|default:action_label }}">
+          {{ action_label }}
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>

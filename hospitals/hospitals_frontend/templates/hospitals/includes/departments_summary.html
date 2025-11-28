@@ -1,0 +1,26 @@
+<!-- {#
+  Include: Departments summary
+  Purpose:
+    - Show departments with capacity or priority indicators.
+  Context expectations:
+    - departments: iterable of items with title, subtitle?, image_url?, badges?, kpis?, href? or url_name/url_arg?
+#} -->
+
+<section class="panel">
+  <header class="panel-header">
+    <h2 class="panel-title">Departments</h2>
+    <p class="panel-subtitle text-muted">Capacity and operational status</p>
+  </header>
+
+  <div class="panel-body">
+    {% if departments %}
+      <div class="mini-grid">
+        {% for dept in departments %}
+          {% include "components/mini_card.html" with item=dept title=dept.title subtitle=dept.subtitle image_url=dept.image_url badges=dept.badges kpis=dept.kpis href=dept.href url_name=dept.url_name url_arg=dept.url_arg aria_label=dept.aria_label target=dept.target %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "components/empty_state.html" with title="No departments configured" message="Create or update departments to track capacity and workflows." icon="🏥" action_label="Manage departments" url_name="departments:page-list" %}
+    {% endif %}
+  </div>
+</section>

@@ -1,0 +1,80 @@
+{#
+  Component: mini_card.html
+  Purpose:
+    - Render a compact card suitable for listing items (appointments, doctors, departments).
+    - Generic and reusable across apps; relies on context to fill details.
+  Expected context:
+    - item: underlying object (passed through for future hooks; not required by markup)
+    - title: main card title (required)
+    - subtitle: secondary text (optional)
+    - image_url: optional image for visual context
+    - badges: optional list of dict-like items with:
+        - label: badge text
+        - variant: style hint (e.g., "success", "warning", "info")
+    - kpis: optional list of dict-like items with:
+        - label: KPI label
+        - value: KPI value
+        - icon: optional emoji/icon
+    - url_name/url_arg OR href: navigation target (optional)
+    - aria_label: accessibility label (optional; falls back to title)
+    - target: link target (optional; defaults to _self)
+  Styling:
+    - Reuses card.css, badge.css, image.css, interactions.css for consistent visuals.
+#}
+
+<div class="mini-card">
+  <div class="mini-card-media">
+    {% if image_url %}
+      <img src="{{ image_url }}" alt="{{ title }} image" class="mini-card-image">
+    {% else %}
+      <div class="mini-card-placeholder" aria-hidden="true">📄</div>
+    {% endif %}
+  </div>
+
+  <div class="mini-card-body">
+    <div class="mini-card-header">
+      <h3 class="mini-card-title">{{ title }}</h3>
+      {% if subtitle %}<div class="mini-card-subtitle text-muted">{{ subtitle }}</div>{% endif %}
+    </div>
+
+    {% if badges %}
+      <div class="mini-card-badges">
+        {% for b in badges %}
+          <span class="badge {% if b.variant %}badge-{{ b.variant }}{% else %}badge-default{% endif %}">{{ b.label }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if kpis %}
+      <div class="mini-card-kpis">
+        {% for k in kpis %}
+          <div class="mini-card-kpi">
+            {% if k.icon %}<span class="mini-card-kpi-icon" aria-hidden="true">{{ k.icon }}</span>{% endif %}
+            <span class="mini-card-kpi-label">{{ k.label }}</span>
+            <span class="mini-card-kpi-value">{{ k.value }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="mini-card-actions">
+    {% if href %}
+      <a class="btn btn-sm btn-primary"
+         href="{{ href }}"
+         target="{{ target|default:'_self' }}"
+         aria-label="{{ aria_label|default:title }}">
+        View
+      </a>
+    {% elif url_name %}
+      <a class="btn btn-sm btn-primary"
+         href="{% if url_arg %}{% url url_name url_arg %}{% else %}{% url url_name %}{% endif %}"
+         target="{{ target|default:'_self' }}"
+         aria-label="{{ aria_label|default:title }}">
+        View
+      </a>
+    {% else %}
+      <button class="btn btn-sm btn-secondary" type="button" disabled aria-disabled="true">View</button>
+    {% endif %}
+  </div>
+</div>

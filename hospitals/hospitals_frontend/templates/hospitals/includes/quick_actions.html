@@ -1,0 +1,13 @@
+<!-- {#
+  Include: Quick actions (hospital wrapper)
+  Purpose:
+    - Provide hospital-specific defaults and pass-through to root quick_actions component.
+  Context expectations:
+    - actions: list of action dicts (label, icon?, variant?, href? or url_name/url_arg?, aria_label?)
+  Notes:
+    - If no actions are provided, the root component will render a minimal "No actions available" message.
+#} -->
+
+<div class="hosp-quick-actions">
+  {% include "components/quick_actions.html" with actions=actions %}
+</div>

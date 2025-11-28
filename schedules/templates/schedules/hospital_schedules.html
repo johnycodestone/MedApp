@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hospital Schedules - MedApp{% endblock %}
+
+{% block content %}
+<div class="hospital-schedules-page">
+  <div class="container my-4">
+    {# Breadcrumbs #}
+    {% include 'includes/breadcrumbs.html' with crumbs=crumbs %}
+
+    {# Page Header #}
+    <div class="page-header">
+      <h1>Hospital Schedules</h1>
+      <p class="page-subtitle">Manage doctor duties, shifts, and schedules for your hospital</p>
+    </div>
+
+    {% if hospital_profile %}
+      {# Quick Stats #}
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👨‍⚕️</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ duties.count }}</div>
+            <div class="stat-label">Total Duties</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏰</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ shifts.count }}</div>
+            <div class="stat-label">Total Shifts</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ related_schedules.count }}</div>
+            <div class="stat-label">Upcoming Schedules</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏥</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ unique_doctors_count|default:duties.count }}</div>
+            <div class="stat-label">Active Doctors</div>
+          </div>
+        </div>
+      </div>
+
+      {# Duties Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Doctor Duties</h2>
+          <p class="section-description">Duties assigned to doctors at your hospital</p>
+        </div>
+        {% if duties %}
+          <div class="duties-grid">
+            {% for duty in duties %}
+              <div class="duty-card">
+                <div class="duty-header">
+                  <h3>{{ duty.get_duty_type_display }}</h3>
+                  <span class="duty-status {% if duty.is_current %}active{% else %}inactive{% endif %}">
+                    {% if duty.is_current %}Active{% else %}Inactive{% endif %}
+                  </span>
+                </div>
+                <div class="duty-details">
+                  <p><strong>Doctor:</strong> Dr. {{ duty.doctor.user.get_full_name }}</p>
+                  {% if duty.department %}
+                    <p><strong>Department:</strong> {{ duty.department.name }}</p>
+                  {% endif %}
+                  <p><strong>Start Date:</strong> {{ duty.start_date|date:"M d, Y" }}</p>
+                  {% if duty.end_date %}
+                    <p><strong>End Date:</strong> {{ duty.end_date|date:"M d, Y" }}</p>
+                  {% else %}
+                    <p><strong>End Date:</strong> Ongoing</p>
+                  {% endif %}
+                  {% if duty.notes %}
+                    <p class="duty-notes">{{ duty.notes }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No duties assigned yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Shifts Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Weekly Shifts</h2>
+          <p class="section-description">All shifts for doctors at your hospital</p>
+        </div>
+        {% if shifts %}
+          <div class="shifts-table-container">
+            <table class="shifts-table">
+              <thead>
+                <tr>
+                  <th>Doctor</th>
+                  <th>Day</th>
+                  <th>Time</th>
+                  <th>Duty Type</th>
+                  <th>Department</th>
+                  <th>Max Appointments</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for shift in shifts %}
+                  <tr>
+                    <td>{{ shift.duty.doctor.user.get_full_name }}</td>
+                    <td>{{ shift.get_day_of_week_display }}</td>
+                    <td>{{ shift.start_time|time:"H:i" }} - {{ shift.end_time|time:"H:i" }}</td>
+                    <td>{{ shift.duty.get_duty_type_display }}</td>
+                    <td>{% if shift.duty.department %}{{ shift.duty.department.name }}{% else %}N/A{% endif %}</td>
+                    <td>{{ shift.max_appointments }}</td>
+                    <td>
+                      <span class="shift-status {% if shift.is_active %}active{% else %}inactive{% endif %}">
+                        {% if shift.is_active %}Active{% else %}Inactive{% endif %}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No shifts configured yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Related Schedules Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Upcoming Schedules</h2>
+          <p class="section-description">Schedules for doctors with duties at your hospital</p>
+        </div>
+        {% if related_schedules %}
+          <div class="schedules-grid">
+            {% for schedule in related_schedules %}
+              <div class="schedule-card">
+                <div class="schedule-header">
+                  <h3>{{ schedule.title }}</h3>
+                  <span class="schedule-status {{ schedule.status|lower }}">{{ schedule.get_status_display }}</span>
+                </div>
+                <div class="schedule-details">
+                  <p><strong>Doctor:</strong> Dr. {{ schedule.doctor.user.get_full_name }}</p>
+                  <p><strong>Patient:</strong> {{ schedule.patient.user.get_full_name }}</p>
+                  <p><strong>Date & Time:</strong> {{ schedule.start_time|date:"M d, Y" }} at {{ schedule.start_time|time:"H:i" }}</p>
+                  <p><strong>Duration:</strong> {{ schedule.duration }}</p>
+                  {% if schedule.category %}
+                    <p><strong>Category:</strong> {{ schedule.category.name }}</p>
+                  {% endif %}
+                  {% if schedule.description %}
+                    <p class="schedule-description">{{ schedule.description|truncatewords:20 }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No upcoming schedules found.</p>
+          </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h2>Hospital Profile Not Found</h2>
+        <p>You need to be a hospital administrator to view hospital schedules.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'schedules/css/hospital_schedules.css' %}">
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'schedules/js/hospital_schedules.js' %}"></script>
+{% endblock %}
+{% endblock %}
+

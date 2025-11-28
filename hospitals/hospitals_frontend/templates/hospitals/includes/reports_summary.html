@@ -1,0 +1,26 @@
+<!-- {#
+  Include: Reports summary
+  Purpose:
+    - Show latest hospital reports or analytics shortcuts.
+  Context expectations:
+    - reports: iterable of items with title, subtitle?, image_url?, badges?, kpis?, href? or url_name/url_arg?
+#} -->
+
+<section class="panel">
+  <header class="panel-header">
+    <h2 class="panel-title">Recent Reports</h2>
+    <p class="panel-subtitle text-muted">Latest analytics and operational insights</p>
+  </header>
+
+  <div class="panel-body">
+    {% if reports %}
+      <div class="mini-grid">
+        {% for rep in reports %}
+          {% include "components/mini_card.html" with item=rep title=rep.title subtitle=rep.subtitle image_url=rep.image_url badges=rep.badges kpis=rep.kpis href=rep.href url_name=rep.url_name url_arg=rep.url_arg aria_label=rep.aria_label target=rep.target %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "components/empty_state.html" with title="No reports available" message="Generate operational reports to track performance and compliance." icon="📊" action_label="View reports" url_name="reports:dashboard" %}
+    {% endif %}
+  </div>
+</section>

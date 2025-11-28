@@ -8,7 +8,9 @@ from .views import (
     ScheduleViewSet,
     ScheduleReminderViewSet,
     ScheduleDashboardView,
-    schedule_calendar_view
+    schedule_calendar_view,
+    doctor_schedules_view,
+    hospital_schedules_view
 )
 
 
@@ -24,6 +26,8 @@ urlpatterns = [
     # Dashboard and Main Views
     path('', ScheduleDashboardView.as_view(), name='schedule-dashboard'),
     path('calendar/', schedule_calendar_view, name='schedule-calendar'),
+    path('doctor/', doctor_schedules_view, name='doctor-schedules'),
+    path('hospital/', hospital_schedules_view, name='hospital-schedules'),
     
     # API Routes
     path('api/', include(router.urls)),

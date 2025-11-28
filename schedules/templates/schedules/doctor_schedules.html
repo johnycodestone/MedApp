@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Doctor Schedules - MedApp{% endblock %}
+
+{% block content %}
+<div class="doctor-schedules-page">
+  <div class="container my-4">
+    {# Breadcrumbs #}
+    {% include 'includes/breadcrumbs.html' with crumbs=crumbs %}
+
+    {# Page Header #}
+    <div class="page-header">
+      <h1>Doctor Schedules</h1>
+      <p class="page-subtitle">Manage your duties, shifts, availability, and schedules</p>
+    </div>
+
+    {% if doctor_profile %}
+      {# Quick Stats #}
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📋</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ duties.count }}</div>
+            <div class="stat-label">Active Duties</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏰</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ shifts.count }}</div>
+            <div class="stat-label">Total Shifts</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ upcoming_schedules.count }}</div>
+            <div class="stat-label">Upcoming Schedules</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏥</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ availability_slots.count }}</div>
+            <div class="stat-label">Available Slots</div>
+          </div>
+        </div>
+      </div>
+
+      {# Duties Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Hospital Duties</h2>
+          <p class="section-description">Duties assigned by hospitals</p>
+        </div>
+        {% if duties %}
+          <div class="duties-grid">
+            {% for duty in duties %}
+              <div class="duty-card">
+                <div class="duty-header">
+                  <h3>{{ duty.get_duty_type_display }}</h3>
+                  <span class="duty-status {% if duty.is_current %}active{% else %}inactive{% endif %}">
+                    {% if duty.is_current %}Active{% else %}Inactive{% endif %}
+                  </span>
+                </div>
+                <div class="duty-details">
+                  <p><strong>Hospital:</strong> {{ duty.hospital.hospital_name }}</p>
+                  {% if duty.department %}
+                    <p><strong>Department:</strong> {{ duty.department.name }}</p>
+                  {% endif %}
+                  <p><strong>Start Date:</strong> {{ duty.start_date|date:"M d, Y" }}</p>
+                  {% if duty.end_date %}
+                    <p><strong>End Date:</strong> {{ duty.end_date|date:"M d, Y" }}</p>
+                  {% else %}
+                    <p><strong>End Date:</strong> Ongoing</p>
+                  {% endif %}
+                  {% if duty.notes %}
+                    <p class="duty-notes">{{ duty.notes }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No duties assigned yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Shifts Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Weekly Shifts</h2>
+          <p class="section-description">Your recurring weekly shifts</p>
+        </div>
+        {% if shifts %}
+          <div class="shifts-table-container">
+            <table class="shifts-table">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Time</th>
+                  <th>Duty</th>
+                  <th>Hospital</th>
+                  <th>Max Appointments</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for shift in shifts %}
+                  <tr>
+                    <td>{{ shift.get_day_of_week_display }}</td>
+                    <td>{{ shift.start_time|time:"H:i" }} - {{ shift.end_time|time:"H:i" }}</td>
+                    <td>{{ shift.duty.get_duty_type_display }}</td>
+                    <td>{{ shift.duty.hospital.hospital_name }}</td>
+                    <td>{{ shift.max_appointments }}</td>
+                    <td>
+                      <span class="shift-status {% if shift.is_active %}active{% else %}inactive{% endif %}">
+                        {% if shift.is_active %}Active{% else %}Inactive{% endif %}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No shifts configured yet.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Availability Slots Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Upcoming Availability Slots</h2>
+          <p class="section-description">Available booking slots for patients</p>
+        </div>
+        {% if availability_slots %}
+          <div class="slots-grid">
+            {% for slot in availability_slots %}
+              <div class="slot-card {% if slot.is_booked %}booked{% else %}available{% endif %}">
+                <div class="slot-date">{{ slot.date|date:"M d, Y" }}</div>
+                <div class="slot-time">{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</div>
+                <div class="slot-status">
+                  {% if slot.is_booked %}
+                    <span class="badge booked-badge">Booked</span>
+                    {% if slot.booked_by %}
+                      <p class="slot-patient">Patient: {{ slot.booked_by.user.get_full_name }}</p>
+                    {% endif %}
+                  {% else %}
+                    <span class="badge available-badge">Available</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No availability slots found.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Leaves Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Leave Requests</h2>
+          <p class="section-description">Your leave requests and status</p>
+        </div>
+        {% if leaves %}
+          <div class="leaves-grid">
+            {% for leave in leaves %}
+              <div class="leave-card">
+                <div class="leave-header">
+                  <h3>{{ leave.get_leave_type_display }}</h3>
+                  <span class="leave-status {{ leave.status|lower }}">{{ leave.get_status_display }}</span>
+                </div>
+                <div class="leave-details">
+                  <p><strong>Period:</strong> {{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}</p>
+                  <p><strong>Duration:</strong> {{ leave.duration_days }} day{{ leave.duration_days|pluralize }}</p>
+                  {% if leave.reason %}
+                    <p class="leave-reason">{{ leave.reason }}</p>
+                  {% endif %}
+                  {% if leave.approval_notes %}
+                    <p class="leave-approval-notes"><strong>Approval Notes:</strong> {{ leave.approval_notes }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No leave requests found.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Schedule Overrides Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Schedule Overrides</h2>
+          <p class="section-description">Manual schedule modifications</p>
+        </div>
+        {% if overrides %}
+          <div class="overrides-grid">
+            {% for override in overrides %}
+              <div class="override-card">
+                <div class="override-header">
+                  <h3>{{ override.date|date:"M d, Y" }}</h3>
+                  <span class="override-status {% if override.is_available %}available{% else %}unavailable{% endif %}">
+                    {% if override.is_available %}Available{% else %}Unavailable{% endif %}
+                  </span>
+                </div>
+                <div class="override-details">
+                  {% if override.custom_start_time and override.custom_end_time %}
+                    <p><strong>Custom Time:</strong> {{ override.custom_start_time|time:"H:i" }} - {{ override.custom_end_time|time:"H:i" }}</p>
+                  {% endif %}
+                  {% if override.reason %}
+                    <p class="override-reason">{{ override.reason }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No schedule overrides found.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Upcoming Schedules Section #}
+      <div class="section">
+        <div class="section-header">
+          <h2>Upcoming Schedules</h2>
+          <p class="section-description">Your confirmed and pending schedules</p>
+        </div>
+        {% if upcoming_schedules %}
+          <div class="schedules-grid">
+            {% for schedule in upcoming_schedules %}
+              <div class="schedule-card">
+                <div class="schedule-header">
+                  <h3>{{ schedule.title }}</h3>
+                  <span class="schedule-status {{ schedule.status|lower }}">{{ schedule.get_status_display }}</span>
+                </div>
+                <div class="schedule-details">
+                  <p><strong>Patient:</strong> {{ schedule.patient.user.get_full_name }}</p>
+                  <p><strong>Date & Time:</strong> {{ schedule.start_time|date:"M d, Y" }} at {{ schedule.start_time|time:"H:i" }}</p>
+                  <p><strong>Duration:</strong> {{ schedule.duration }}</p>
+                  {% if schedule.category %}
+                    <p><strong>Category:</strong> {{ schedule.category.name }}</p>
+                  {% endif %}
+                  {% if schedule.description %}
+                    <p class="schedule-description">{{ schedule.description|truncatewords:20 }}</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No upcoming schedules found.</p>
+          </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h2>Doctor Profile Not Found</h2>
+        <p>You need to be a doctor to view doctor schedules.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'schedules/css/doctor_schedules.css' %}">
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'schedules/js/doctor_schedules.js' %}"></script>
+{% endblock %}
+{% endblock %}
+

@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Schedules Dashboard - MedApp{% endblock %}
+
+{% block content %}
+<div class="schedules-dashboard-page">
+  <div class="container my-4">
+    {# Breadcrumbs #}
+    {% if crumbs %}
+      {% include 'includes/breadcrumbs.html' with crumbs=crumbs %}
+    {% endif %}
+
+    {# Page Header #}
+    <div class="page-header">
+      <h1>Schedules Dashboard</h1>
+      <p class="page-subtitle">Manage and view all schedule-related information</p>
+    </div>
+
+    {# Quick Stats #}
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ total_schedules|default:0 }}</div>
+          <div class="stat-label">Total Schedules</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ upcoming_schedules|length|default:0 }}</div>
+          <div class="stat-label">Upcoming Schedules</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-content">
+          <div class="stat-value">{{ categories|length|default:0 }}</div>
+          <div class="stat-label">Categories</div>
+        </div>
+      </div>
+    </div>
+
+    {# Quick Actions #}
+    <div class="section">
+      <div class="section-header">
+        <h2>Quick Actions</h2>
+        <p class="section-description">Access schedule management pages</p>
+      </div>
+      <div class="actions-grid">
+        <a href="{% url 'schedules:doctor-schedules' %}" class="action-card">
+          <div class="action-icon">👨‍⚕️</div>
+          <h3>Doctor Schedules</h3>
+          <p>View and manage doctor duties, shifts, availability, and schedules</p>
+          <span class="action-link">View →</span>
+        </a>
+        <a href="{% url 'schedules:hospital-schedules' %}" class="action-card">
+          <div class="action-icon">🏥</div>
+          <h3>Hospital Schedules</h3>
+          <p>View and manage hospital-assigned duties and schedules</p>
+          <span class="action-link">View →</span>
+        </a>
+        <a href="{% url 'schedules:schedule-calendar' %}" class="action-card">
+          <div class="action-icon">📆</div>
+          <h3>Calendar View</h3>
+          <p>View all schedules in a calendar format</p>
+          <span class="action-link">View →</span>
+        </a>
+      </div>
+    </div>
+
+    {# Upcoming Schedules Section #}
+    {% if upcoming_schedules %}
+    <div class="section">
+      <div class="section-header">
+        <h2>Upcoming Schedules</h2>
+        <p class="section-description">Your next scheduled appointments and events</p>
+      </div>
+      <div class="schedules-list">
+        {% for schedule in upcoming_schedules %}
+          <div class="schedule-item">
+            <div class="schedule-date">
+              <div class="schedule-day">{{ schedule.start_time|date:"d" }}</div>
+              <div class="schedule-month">{{ schedule.start_time|date:"M" }}</div>
+            </div>
+            <div class="schedule-details">
+              <h4>{{ schedule.title }}</h4>
+              <p class="schedule-time">{{ schedule.start_time|date:"l, F d, Y" }} at {{ schedule.start_time|time:"H:i" }}</p>
+              {% if schedule.description %}
+                <p class="schedule-description">{{ schedule.description|truncatewords:15 }}</p>
+              {% endif %}
+            </div>
+            <div class="schedule-status">
+              <span class="status-badge {{ schedule.status|lower }}">{{ schedule.get_status_display }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# Categories Section #}
+    {% if categories %}
+    <div class="section">
+      <div class="section-header">
+        <h2>Schedule Categories</h2>
+        <p class="section-description">Available schedule categories</p>
+      </div>
+      <div class="categories-grid">
+        {% for category in categories %}
+          <div class="category-card">
+            <h3>{{ category.name }}</h3>
+            {% if category.description %}
+              <p>{{ category.description }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'schedules/css/dashboard.css' %}">
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'schedules/js/dashboard.js' %}"></script>
+{% endblock %}
+{% endblock %}
+

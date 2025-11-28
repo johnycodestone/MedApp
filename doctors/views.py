@@ -15,9 +15,10 @@ from datetime import timedelta, datetime
 from .models import DoctorProfile, SPECIALIZATION_CHOICES
 from .serializers import DoctorProfileSerializer, TimetableSerializer, PrescriptionSerializer
 from appointments.models import Appointment, AppointmentStatus
+from prescriptions.models import Prescription   # ✅ unified Prescription model
 from .services import (
     ensure_doctor_profile, manage_timetable, get_timetable,
-    cancel_patient_appointment, give_prescription, get_doctor_prescriptions
+    cancel_patient_appointment
 )
 
 # ---------------------------
@@ -56,16 +57,31 @@ class CancelAppointmentView(APIView):
 
 
 class PrescriptionView(APIView):
+    """
+    API for creating and listing prescriptions tied to appointments.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         data = request.data
         pdf = request.FILES.get("pdf_file")
-        pres = give_prescription(request.user, data["patient_id"], data["text"], pdf)
+
+        # ✅ prescriptions are tied to appointments, not directly to patients
+        appointment_id = data.get("appointment_id")
+        appointment = get_object_or_404(Appointment, id=appointment_id, doctor__user=request.user)
+
+        pres = Prescription.objects.create(
+            appointment=appointment,
+            notes=data.get("text", "")
+        )
+        if pdf:
+            pres.pdf_file = pdf
+            pres.save()
+
         return Response(PrescriptionSerializer(pres).data, status=status.HTTP_201_CREATED)
 
     def get(self, request):
-        prescriptions = get_doctor_prescriptions(request.user)
+        prescriptions = Prescription.objects.filter(appointment__doctor__user=request.user)
         return Response(PrescriptionSerializer(prescriptions, many=True).data)
 
 
@@ -83,11 +99,7 @@ class DoctorListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        qs = (
-            DoctorProfile.objects
-            .select_related("user")
-            .all()
-        )
+        qs = DoctorProfile.objects.select_related("user").all()
         params = self.request.GET
 
         # Text search: name, bio, qualification
@@ -100,7 +112,7 @@ class DoctorListView(ListView):
                 Q(qualification__icontains=q)
             )
 
-        # Specialization filter (key must match choices exactly)
+        # Specialization filter
         specialization = (params.get("specialization") or "").strip()
         if specialization:
             qs = qs.filter(specialization=specialization)
@@ -124,18 +136,13 @@ class DoctorListView(ListView):
         ctx = super().get_context_data(**kwargs)
         params = self.request.GET.copy()
 
-        # Current filter values for form
         ctx["filters"] = {
             "q": params.get("q", ""),
             "specialization": params.get("specialization", ""),
             "min_exp": params.get("min_exp", ""),
             "min_rating": params.get("min_rating", ""),
         }
-
-        # Pass specialization choices (key, label) to template for dynamic dropdown
         ctx["specializations"] = SPECIALIZATION_CHOICES
-
-        # Breadcrumbs
         ctx["crumbs"] = [
             {"label": "Home", "url": "/"},
             {"label": "Doctors", "url": None},
@@ -153,7 +160,6 @@ class DoctorDetailView(View):
         doctor = get_object_or_404(User, id=id)
         profile = getattr(doctor, "doctors_doctor_profile", None)
 
-        # Use timezone-aware 'now'
         today = timezone.now()
         next_week = today + timedelta(days=7)
 
@@ -163,7 +169,6 @@ class DoctorDetailView(View):
             status__in=[AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED]
         ).values_list("scheduled_time", flat=True)
 
-        # Generate hourly slots (9am to 5pm) for next 7 days
         slots = []
         for day in range(7):
             date = today + timedelta(days=day)

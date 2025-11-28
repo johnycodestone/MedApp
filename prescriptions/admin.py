@@ -1,5 +1,3 @@
-# prescriptions/admin.py
-
 from django.contrib import admin
 from .models import Prescription, Medication
 
@@ -16,6 +14,7 @@ class MedicationInline(admin.TabularInline):
     fields = ('name', 'dosage', 'frequency', 'duration')
     verbose_name_plural = "Medications"
 
+
 # -------------------------------
 # Admin registration for Prescription
 # -------------------------------
@@ -23,15 +22,27 @@ class MedicationInline(admin.TabularInline):
 class PrescriptionAdmin(admin.ModelAdmin):
     """
     Admin panel configuration for Prescription.
-    Displays prescriptions issued by doctors to patients.
+    Displays prescriptions tied to appointments.
     Includes inline medication editing and filtering.
     """
-    list_display = ('id', 'doctor', 'patient', 'created_at')
+    list_display = ('id', 'appointment', 'doctor_name', 'patient_name', 'created_at')
     search_fields = (
-        'doctor__user__username',
-        'patient__user__username',
-        'notes'
+        'appointment__doctor__user__username',
+        'appointment__doctor__user__first_name',
+        'appointment__doctor__user__last_name',
+        'appointment__patient__user__username',
+        'appointment__patient__user__first_name',
+        'appointment__patient__user__last_name',
+        'notes',
     )
-    list_filter = ('created_at', 'doctor__specialization')
+    list_filter = ('created_at', 'appointment__doctor__specialization')
     ordering = ('-created_at',)
     inlines = [MedicationInline]
+
+    def doctor_name(self, obj):
+        return obj.appointment.doctor.get_full_name_or_username()
+    doctor_name.short_description = "Doctor"
+
+    def patient_name(self, obj):
+        return obj.appointment.patient.get_full_name_or_username()
+    patient_name.short_description = "Patient"

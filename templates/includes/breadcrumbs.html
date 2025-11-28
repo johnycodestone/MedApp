@@ -17,23 +17,29 @@
    ============================================================================ #} -->
 
 <!-- Breadcrumbs: Context-driven navigation component -->
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    {% for crumb in crumbs %}
-      {# Non-final crumbs with URLs are rendered as links #}
-      {% if not forloop.last and crumb.url %}
-        <li class="breadcrumb-item">
-          <a href="{{ crumb.url }}">{{ crumb.label }}</a>
-        </li>
-      {% else %}
-        {# Final crumb or crumb without URL is marked active #}
-        <li class="breadcrumb-item active" aria-current="page">
-          {{ crumb.label }}
-        </li>
-      {% endif %}
-    {% endfor %}
-  </ol>
-</nav>
+{% if crumbs %}
+  <!-- Breadcrumbs: Context-driven navigation component -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      {% for crumb in crumbs %}
+        {% if not forloop.last and crumb.url %}
+          <li class="breadcrumb-item">
+            <a href="{{ crumb.url }}">
+              {% if crumb.label == "Home" %}
+                <span class="me-1">🏠</span>
+              {% endif %}
+              {{ crumb.label }}
+            </a>
+          </li>
+        {% else %}
+          <li class="breadcrumb-item active" aria-current="page">
+            {{ crumb.label }}
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ol>
+  </nav>
+{% endif %}
 
 <!-- {# ============================================================================
    Developer Notes:

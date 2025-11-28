@@ -1,18 +1,6 @@
-
 {% extends "base.html" %}
 
 {% block content %}
-<!{# ============================================================================
-   appointments/create.html
-   Purpose:
-     - Renders the appointment booking form using AppointmentForm.
-     - Integrates root-level components: breadcrumbs, form styling, validation.
-     - Uses POST method to submit to AppointmentCreateView.
-   Context expected:
-     - form: instance of AppointmentForm
-     - crumbs: breadcrumb trail (list of {label, url})
-   ============================================================================ #}-->
-
 <div class="container my-4">
 
   {# Breadcrumbs for navigation context #}
@@ -21,8 +9,16 @@
   <h2 class="mb-3">Book an Appointment</h2>
   <p class="text-muted">Fill out the form below to schedule your appointment.</p>
 
+  <a href="{% url 'appointments:appointment-list' %}" class="btn btn-link mb-3">← Back to Appointments</a>
+
   <form method="post" novalidate>
     {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
 
     {# Doctor selection dropdown #}
     <div class="mb-3">
@@ -52,7 +48,9 @@
     </div>
 
     {# Submit button #}
-    <button type="submit" class="btn btn-primary">Book Appointment</button>
+    <button type="submit" class="btn btn-primary mt-3">
+      <span>✅</span> Book Appointment
+    </button>
   </form>
 
 </div>

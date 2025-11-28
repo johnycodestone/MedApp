@@ -1,18 +1,31 @@
 from django.db import models
-from doctors.models import DoctorProfile
-from patients.models import PatientProfile
 
 class Prescription(models.Model):
-    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name="prescription_app_prescriptions",)
-    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='prescriptions')
-    created_at = models.DateTimeField(auto_now_add=True)
+    appointment = models.OneToOneField(
+        "appointments.Appointment",   # ✅ one prescription per appointment
+        on_delete=models.CASCADE,
+        related_name="prescription"
+    )
     notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Prescription #{self.id} for {self.patient.user.get_full_name()}"
+        patient_name = self.appointment.patient.get_full_name_or_username()
+        doctor_name = self.appointment.doctor.get_full_name_or_username()
+        return f"Prescription for {patient_name} by Dr. {doctor_name}"
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Prescription"
+        verbose_name_plural = "Prescriptions"
+
 
 class Medication(models.Model):
-    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name='medications')
+    prescription = models.ForeignKey(
+        Prescription,
+        on_delete=models.CASCADE,
+        related_name="medications"
+    )
     name = models.CharField(max_length=100)
     dosage = models.CharField(max_length=50)
     frequency = models.CharField(max_length=50)

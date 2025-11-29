@@ -1,639 +1,592 @@
 """
 accounts/views.py
 
-HTTP request handlers for accounts operations.
-Keeps views thin - delegates to services for business logic.
+Combined HTML and API views for the accounts app.
+
+- HTML views: RegisterView, LoginView, LogoutView, ProfileView, ProfileUpdateView,
+  PasswordChangeView, PasswordResetRequestView, PasswordResetDoneView,
+  PasswordResetConfirmView, PasswordResetCompleteView, EmailVerificationView.
+
+- API views: lightweight DRF endpoints for registration, JWT login, logout, profile,
+  password change, password reset placeholders, email verification placeholder,
+  and user activity listing.
+
+Design goals:
+- Email-first authentication: try email login first, then username.
+- Defensive activity logging: always provide safe defaults for ip_address and user_agent;
+  wrap writes in try/except so logging never breaks the request flow.
+- Minimal, clear API endpoints: use existing forms for validation to keep behavior consistent.
 """
 
-from rest_framework import status, generics, views
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import login, logout
-from django.shortcuts import render, redirect
+from typing import Optional
+import secrets
+from datetime import timedelta
+
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views import View
-from django.views.generic import FormView
-from django.urls import reverse_lazy
+from django.views.generic import TemplateView
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.conf import settings
 
-from .serializers import (
-    UserRegistrationSerializer, UserLoginSerializer, UserSerializer,
-    UserUpdateSerializer, PasswordChangeSerializer, PasswordResetRequestSerializer,
-    PasswordResetConfirmSerializer, EmailVerificationSerializer, UserActivitySerializer
-)
+# Local forms and models
 from .forms import (
-    CustomUserRegistrationForm, CustomAuthenticationForm,
-    UserProfileUpdateForm, PasswordChangeForm as DjangoPasswordChangeForm,
-    PasswordResetRequestForm, PasswordResetConfirmForm
+    CustomUserRegistrationForm,
+    CustomAuthenticationForm,
+    UserProfileUpdateForm,
+    PasswordChangeForm,
+    PasswordResetRequestForm,
+    PasswordResetConfirmForm,
 )
-from .services import UserService, VerificationService
-from .repositories import UserActivityRepository
-from .permissions import IsOwnerOrAdmin
+from .models import CustomUser, UserActivity, VerificationToken
+
+# DRF imports (API views)
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
-# ============================================
-# REST API Views (DRF)
-# ============================================
+# ---------------------------
+# Small helpers
+# ---------------------------
 
-class UserRegistrationAPIView(generics.CreateAPIView):
+def _get_client_ip(request) -> Optional[str]:
     """
-    API endpoint for user registration.
-    
-    POST /api/accounts/register/
+    Return the client's IP address in a best-effort way.
+    - Honors X-Forwarded-For if present (first entry).
+    - Falls back to REMOTE_ADDR.
     """
-    serializer_class = UserRegistrationSerializer
-    permission_classes = [AllowAny]
-    
-    def create(self, request, *args, **kwargs):
-        """Handle user registration"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            # Register user via service
-            user, token = UserService.register_user(
-                username=serializer.validated_data['username'],
-                email=serializer.validated_data['email'],
-                password=serializer.validated_data['password'],
-                role=serializer.validated_data['role'],
-                first_name=serializer.validated_data.get('first_name', ''),
-                last_name=serializer.validated_data.get('last_name', ''),
-                phone=serializer.validated_data.get('phone', '')
-            )
-            
-            return Response({
-                'message': 'Registration successful. Please check your email to verify your account.',
-                'user': UserSerializer(user).data,
-                'verification_token': token
-            }, status=status.HTTP_201_CREATED)
-        
-        except ValueError as e:
-            return Response({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+    xff = request.META.get("HTTP_X_FORWARDED_FOR")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
 
 
-class UserLoginAPIView(views.APIView):
+def _get_user_agent(request) -> str:
     """
-    API endpoint for user login.
-    
-    POST /api/accounts/login/
+    Return the User-Agent header or a safe default.
+    This prevents NOT NULL IntegrityErrors when logging activities.
     """
-    permission_classes = [AllowAny]
-    
-    def post(self, request):
-        """Handle user login and return JWT tokens"""
-        serializer = UserLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            # Authenticate user
-            user = UserService.authenticate_user(
-                username_or_email=serializer.validated_data['username_or_email'],
-                password=serializer.validated_data['password'],
-                ip_address=self.get_client_ip(request),
-                user_agent=request.META.get('HTTP_USER_AGENT', '')
-            )
-            
-            if not user:
-                return Response({
-                    'error': 'Invalid credentials'
-                }, status=status.HTTP_401_UNAUTHORIZED)
-            
-            if not user.is_active:
-                return Response({
-                    'error': 'Account is deactivated'
-                }, status=status.HTTP_403_FORBIDDEN)
-            
-            # Generate JWT tokens
-            refresh = RefreshToken.for_user(user)
-            
-            return Response({
-                'message': 'Login successful',
-                'user': UserSerializer(user).data,
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token)
-                }
-            }, status=status.HTTP_200_OK)
-        
-        except ValueError as e:
-            return Response({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-    
-    def get_client_ip(self, request):
-        """Extract client IP address from request"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+    return request.META.get("HTTP_USER_AGENT") or "unknown"
 
 
-class UserLogoutAPIView(views.APIView):
+def _create_verification_token(user, token_type="PASSWORD_RESET", days_valid=1):
     """
-    API endpoint for user logout.
-    
-    POST /api/accounts/logout/
+    Create and return a VerificationToken for the given user.
     """
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request):
-        """Handle user logout"""
-        # Log activity
-        UserActivityRepository.log_activity(
-            user=request.user,
-            action='LOGOUT'
-        )
-        
-        return Response({
-            'message': 'Logout successful'
-        }, status=status.HTTP_200_OK)
+    token = secrets.token_urlsafe(32)
+    expires_at = timezone.now() + timedelta(days=days_valid)
+    vt = VerificationToken.objects.create(
+        user=user,
+        token=token,
+        token_type=token_type,
+        expires_at=expires_at,
+    )
+    return vt
 
 
-class UserProfileAPIView(generics.RetrieveUpdateAPIView):
-    """
-    API endpoint for viewing and updating user profile.
-    
-    GET /api/accounts/profile/
-    PUT /api/accounts/profile/
-    PATCH /api/accounts/profile/
-    """
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_object(self):
-        """Return current user"""
-        return self.request.user
-    
-    def get_serializer_class(self):
-        """Use different serializer for updates"""
-        if self.request.method in ['PUT', 'PATCH']:
-            return UserUpdateSerializer
-        return UserSerializer
-    
-    def update(self, request, *args, **kwargs):
-        """Handle profile update"""
-        partial = kwargs.pop('partial', False)
-        serializer = self.get_serializer(self.get_object(), data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            # Update via service
-            updated_user = UserService.update_profile(
-                user=request.user,
-                **serializer.validated_data
-            )
-            
-            return Response({
-                'message': 'Profile updated successfully',
-                'user': UserSerializer(updated_user).data
-            }, status=status.HTTP_200_OK)
-        
-        except ValueError as e:
-            return Response({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+# ---------------------------
+# HTML Views (server-rendered)
+# ---------------------------
 
-
-class PasswordChangeAPIView(views.APIView):
+class RegisterView(View):
     """
-    API endpoint for changing password.
-    
-    POST /api/accounts/change-password/
+    HTML registration view.
     """
-    permission_classes = [IsAuthenticated]
-    
-    def post(self, request):
-        """Handle password change"""
-        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            UserService.change_password(
-                user=request.user,
-                old_password=serializer.validated_data['old_password'],
-                new_password=serializer.validated_data['new_password']
-            )
-            
-            return Response({
-                'message': 'Password changed successfully'
-            }, status=status.HTTP_200_OK)
-        
-        except ValueError as e:
-            return Response({
-                'error': str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-
-class PasswordResetRequestAPIView(views.APIView):
-    """
-    API endpoint for requesting password reset.
-    
-    POST /api/accounts/password-reset/
-    """
-    permission_classes = [AllowAny]
-    
-    def post(self, request):
-        """Handle password reset request"""
-        serializer = PasswordResetRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        # Always return success (don't reveal if email exists)
-        VerificationService.create_password_reset_token(
-            email=serializer.validated_data['email']
-        )
-        
-        return Response({
-            'message': 'If an account exists with this email, a password reset link has been sent.'
-        }, status=status.HTTP_200_OK)
-
-
-class PasswordResetConfirmAPIView(views.APIView):
-    """
-    API endpoint for confirming password reset.
-    
-    POST /api/accounts/password-reset/confirm/
-    """
-    permission_classes = [AllowAny]
-    
-    def post(self, request):
-        """Handle password reset confirmation"""
-        serializer = PasswordResetConfirmSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        user = VerificationService.reset_password(
-            token=serializer.validated_data['token'],
-            new_password=serializer.validated_data['new_password']
-        )
-        
-        if not user:
-            return Response({
-                'error': 'Invalid or expired token'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response({
-            'message': 'Password reset successful'
-        }, status=status.HTTP_200_OK)
-
-
-class EmailVerificationAPIView(views.APIView):
-    """
-    API endpoint for verifying email.
-    
-    POST /api/accounts/verify-email/
-    """
-    permission_classes = [AllowAny]
-    
-    def post(self, request):
-        """Handle email verification"""
-        serializer = EmailVerificationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        user = VerificationService.verify_email(
-            token=serializer.validated_data['token']
-        )
-        
-        if not user:
-            return Response({
-                'error': 'Invalid or expired verification token'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response({
-            'message': 'Email verified successfully',
-            'user': UserSerializer(user).data
-        }, status=status.HTTP_200_OK)
-
-
-class UserActivityListAPIView(generics.ListAPIView):
-    """
-    API endpoint for listing user activities.
-    
-    GET /api/accounts/activities/
-    """
-    serializer_class = UserActivitySerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        """Return activities for current user"""
-        return UserActivityRepository.get_user_activities(
-            user=self.request.user,
-            limit=50
-        )
-
-
-# ============================================
-# Traditional Django Views (HTML Templates)
-# ============================================
-
-class RegisterView(FormView):
-    """
-    Traditional registration view with HTML form.
-    
-    GET/POST /accounts/register/
-    """
-    template_name = 'accounts/register.html'
+    template_name = "accounts/register.html"
     form_class = CustomUserRegistrationForm
-    success_url = reverse_lazy('accounts:login')
-    
-    def form_valid(self, form):
-        """Handle successful registration"""
-        try:
-            user, token = UserService.register_user(
-                username=form.cleaned_data['username'],
-                email=form.cleaned_data['email'],
-                password=form.cleaned_data['password1'],
-                role=form.cleaned_data['role'],
-                first_name=form.cleaned_data['first_name'],
-                last_name=form.cleaned_data['last_name'],
-                phone=form.cleaned_data.get('phone', '')
-            )
-            
-            messages.success(
-                self.request,
-                'Registration successful! Please check your email to verify your account.'
-            )
-            return super().form_valid(form)
-        
-        except ValueError as e:
-            messages.error(self.request, str(e))
-            return self.form_invalid(form)
 
-
-class LoginView(FormView):
-    """
-    Traditional login view with HTML form.
-    
-    GET/POST /accounts/login/
-    """
-    template_name = 'accounts/login.html'
-    form_class = CustomAuthenticationForm
-    success_url = reverse_lazy('accounts:dashboard')
-    
-    def form_valid(self, form):
-        """Handle successful login"""
-        try:
-            user = UserService.authenticate_user(
-                username_or_email=form.cleaned_data['username'],
-                password=form.cleaned_data['password'],
-                ip_address=self.get_client_ip(),
-                user_agent=self.request.META.get('HTTP_USER_AGENT', '')
-            )
-            
-            if not user:
-                messages.error(self.request, 'Invalid credentials')
-                return self.form_invalid(form)
-            
-            if not user.is_active:
-                messages.error(self.request, 'Account is deactivated')
-                return self.form_invalid(form)
-            
-            # Login user (create session)
-            login(self.request, user)
-            messages.success(self.request, f'Welcome back, {user.first_name}!')
-            
-            # Redirect based on role
-            if user.is_hospital():
-                return redirect('hospitals:dashboard')
-            elif user.is_doctor():
-                return redirect('doctors:dashboard')
-            elif user.is_patient():
-                return redirect('patients:dashboard')
-            elif user.is_admin():
-                return redirect('adminpanel:dashboard')
-            
-            return super().form_valid(form)
-        
-        except ValueError as e:
-            messages.error(self.request, str(e))
-            return self.form_invalid(form)
-    
-    def get_client_ip(self):
-        """Extract client IP address from request"""
-        x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = self.request.META.get('REMOTE_ADDR')
-        return ip
-
-
-class LogoutView(View):
-    """
-    Traditional logout view.
-    
-    GET/POST /accounts/logout/
-    """
-    
     def get(self, request):
-        """Handle logout"""
-        if request.user.is_authenticated:
-            UserActivityRepository.log_activity(
-                user=request.user,
-                action='LOGOUT'
-            )
-            logout(request)
-            messages.success(request, 'You have been logged out successfully.')
-        
-        return redirect('accounts:login')
-    
+        return render(request, self.template_name, {"form": self.form_class()})
+
     def post(self, request):
-        """Handle logout (POST)"""
-        return self.get(request)
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+
+        user = form.save(commit=False)
+        user.email = (form.cleaned_data.get("email") or "").strip().lower()
+        user.role = form.cleaned_data.get("role")
+        user.first_name = form.cleaned_data.get("first_name")
+        user.last_name = form.cleaned_data.get("last_name")
+        user.phone = form.cleaned_data.get("phone")
+        user.save()
+
+        try:
+            UserActivity.objects.create(
+                user=user,
+                action="REGISTER",
+                ip_address=_get_client_ip(request),
+                user_agent=_get_user_agent(request),
+                metadata={"role": user.role, "email": user.email},
+            )
+        except Exception:
+            pass
+
+        messages.success(request, "Account created successfully. Please sign in.")
+        return redirect(reverse("accounts:login"))
 
 
-class ProfileView(View):
+class LoginView(View):
     """
-    Traditional profile view with HTML template.
-    
-    GET /accounts/profile/
+    HTML login view (email-first).
     """
-    template_name = 'accounts/profile.html'
-    
+    template_name = "accounts/login.html"
+    form_class = CustomAuthenticationForm
+
     def get(self, request):
-        """Display user profile"""
-        if not request.user.is_authenticated:
-            return redirect('accounts:login')
-        
-        # Get recent activities
-        activities = UserActivityRepository.get_user_activities(request.user, limit=10)
-        
-        context = {
-            'user': request.user,
-            'activities': activities
-        }
-        return render(request, self.template_name, context)
+        return render(request, self.template_name, {"form": self.form_class()})
+
+    def post(self, request):
+        form = self.form_class(request, data=request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+
+        identifier = (form.cleaned_data.get("username") or "").strip()
+        password = form.cleaned_data.get("password")
+
+        user = None
+        if "@" in identifier:
+            candidate = CustomUser.objects.filter(email__iexact=identifier).first()
+            if candidate:
+                user = authenticate(request, username=candidate.username, password=password)
+
+        if user is None:
+            user = authenticate(request, username=identifier, password=password)
+
+        if user is None:
+            messages.error(request, "Invalid email/username or password.")
+            return render(request, self.template_name, {"form": form})
+
+        login(request, user)
+
+        try:
+            UserActivity.objects.create(
+                user=user,
+                action="LOGIN",
+                ip_address=_get_client_ip(request),
+                user_agent=_get_user_agent(request),
+                metadata={},
+            )
+        except Exception:
+            pass
+
+        return redirect(reverse("patients:dashboard"))
 
 
-class ProfileUpdateView(FormView):
+class LogoutView(LoginRequiredMixin, View):
     """
-    Traditional profile update view.
-    
-    GET/POST /accounts/profile/edit/
+    HTML logout view. Expects POST.
     """
-    template_name = 'accounts/profile_edit.html'
+    def post(self, request):
+        try:
+            UserActivity.objects.create(
+                user=request.user,
+                action="LOGOUT",
+                ip_address=_get_client_ip(request),
+                user_agent=_get_user_agent(request),
+                metadata={},
+            )
+        except Exception:
+            pass
+        logout(request)
+        messages.info(request, "You have been signed out.")
+        return redirect(reverse("accounts:login"))
+
+
+class ProfileView(LoginRequiredMixin, View):
+    """
+    Simple profile display view.
+    """
+    template_name = "accounts/profile.html"
+
+    def get(self, request):
+        return render(request, self.template_name, {"user": request.user})
+
+
+class ProfileUpdateView(LoginRequiredMixin, View):
+    """
+    Profile update view using UserProfileUpdateForm.
+    """
+    template_name = "accounts/profile_edit.html"
     form_class = UserProfileUpdateForm
-    success_url = reverse_lazy('accounts:profile')
-    
-    def dispatch(self, request, *args, **kwargs):
-        """Ensure user is authenticated"""
-        if not request.user.is_authenticated:
-            return redirect('accounts:login')
-        return super().dispatch(request, *args, **kwargs)
-    
-    def get_form_kwargs(self):
-        """Pass current user instance to form"""
-        kwargs = super().get_form_kwargs()
-        kwargs['instance'] = self.request.user
-        return kwargs
-    
-    def form_valid(self, form):
-        """Handle profile update"""
+
+    def get(self, request):
+        form = self.form_class(instance=request.user)
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request):
+        form = self.form_class(request.POST, instance=request.user)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+
+        user = form.save()
         try:
-            UserService.update_profile(
-                user=self.request.user,
-                **form.cleaned_data
+            UserActivity.objects.create(
+                user=user,
+                action="PROFILE_UPDATE",
+                ip_address=_get_client_ip(request),
+                user_agent=_get_user_agent(request),
+                metadata={},
             )
-            messages.success(self.request, 'Profile updated successfully!')
-            return super().form_valid(form)
-        
-        except ValueError as e:
-            messages.error(self.request, str(e))
-            return self.form_invalid(form)
+        except Exception:
+            pass
+        messages.success(request, "Profile updated.")
+        return redirect(reverse("accounts:profile"))
 
 
-class PasswordChangeView(FormView):
+# ---------------------------
+# Password change / reset / verification (HTML)
+# ---------------------------
+
+class PasswordChangeView(LoginRequiredMixin, View):
     """
-    Traditional password change view.
-    
-    GET/POST /accounts/password/change/
+    HTML view to change password for authenticated users.
+    Uses PasswordChangeForm from accounts/forms.py.
     """
-    template_name = 'accounts/password_change.html'
-    form_class = DjangoPasswordChangeForm
-    success_url = reverse_lazy('accounts:profile')
-    
-    def dispatch(self, request, *args, **kwargs):
-        """Ensure user is authenticated"""
-        if not request.user.is_authenticated:
-            return redirect('accounts:login')
-        return super().dispatch(request, *args, **kwargs)
-    
-    def get_form_kwargs(self):
-        """Pass current user to form"""
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-    
-    def form_valid(self, form):
-        """Handle password change"""
+    template_name = "accounts/password_change.html"
+    form_class = PasswordChangeForm
+
+    def get(self, request):
+        form = self.form_class(user=request.user)
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request):
+        form = self.form_class(user=request.user, data=request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+        # form handles old password verification
+        new_password = form.cleaned_data.get("new_password1")
+        request.user.set_password(new_password)
+        request.user.save()
         try:
-            UserService.change_password(
-                user=self.request.user,
-                old_password=form.cleaned_data['old_password'],
-                new_password=form.cleaned_data['new_password1']
+            UserActivity.objects.create(
+                user=request.user,
+                action="PASSWORD_CHANGE",
+                ip_address=_get_client_ip(request),
+                user_agent=_get_user_agent(request),
+                metadata={},
             )
-            messages.success(self.request, 'Password changed successfully!')
-            return super().form_valid(form)
-        
-        except ValueError as e:
-            messages.error(self.request, str(e))
-            return self.form_invalid(form)
+        except Exception:
+            pass
+        messages.success(request, "Password changed successfully. Please sign in again.")
+        logout(request)
+        return redirect(reverse("accounts:login"))
 
 
-class PasswordResetRequestView(FormView):
+class PasswordResetRequestView(View):
     """
-    Traditional password reset request view.
-    
-    GET/POST /accounts/password/reset/
+    HTML view to request a password reset.
+    Creates a VerificationToken and (optionally) sends an email with the token link.
     """
-    template_name = 'accounts/password_reset.html'
+    template_name = "accounts/password_reset.html"
     form_class = PasswordResetRequestForm
-    success_url = reverse_lazy('accounts:password_reset_done')
-    
-    def form_valid(self, form):
-        """Handle password reset request"""
-        VerificationService.create_password_reset_token(
-            email=form.cleaned_data['email']
-        )
-        return super().form_valid(form)
 
-
-class PasswordResetDoneView(View):
-    """
-    View shown after password reset request.
-    
-    GET /accounts/password/reset/done/
-    """
-    template_name = 'accounts/password_reset_done.html'
-    
     def get(self, request):
-        """Display confirmation message"""
-        return render(request, self.template_name)
+        return render(request, self.template_name, {"form": self.form_class()})
+
+    def post(self, request):
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+
+        email = (form.cleaned_data.get("email") or "").strip().lower()
+        user = CustomUser.objects.filter(email__iexact=email).first()
+        if user:
+            try:
+                vt = _create_verification_token(user, token_type="PASSWORD_RESET", days_valid=1)
+                # Send email with reset link (best-effort; fail silently)
+                reset_link = request.build_absolute_uri(reverse("accounts:password_reset_confirm", args=[vt.token]))
+                try:
+                    send_mail(
+                        subject="MedApp password reset",
+                        message=f"Use the following link to reset your password:\n\n{reset_link}\n\nThis link expires in 24 hours.",
+                        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                        recipient_list=[user.email],
+                        fail_silently=True,
+                    )
+                except Exception:
+                    pass
+            except Exception:
+                pass
+
+        # Always show the same response to avoid account enumeration
+        return redirect(reverse("accounts:password_reset_done"))
 
 
-class PasswordResetConfirmView(FormView):
+class PasswordResetDoneView(TemplateView):
     """
-    Traditional password reset confirmation view.
-    
-    GET/POST /accounts/password/reset/confirm/<token>/
+    Simple page telling the user to check their email.
     """
-    template_name = 'accounts/password_reset_confirm.html'
+    template_name = "accounts/password_reset_done.html"
+
+
+class PasswordResetConfirmView(View):
+    """
+    HTML view to confirm password reset using a token.
+    URL pattern: password/reset/confirm/<str:token>/
+    """
+    template_name = "accounts/password_reset_confirm.html"
     form_class = PasswordResetConfirmForm
-    success_url = reverse_lazy('accounts:password_reset_complete')
-    
-    def get_context_data(self, **kwargs):
-        """Add token to context"""
-        context = super().get_context_data(**kwargs)
-        context['token'] = self.kwargs.get('token')
-        return context
-    
-    def form_valid(self, form):
-        """Handle password reset confirmation"""
-        token = self.kwargs.get('token')
-        
-        user = VerificationService.reset_password(
-            token=token,
-            new_password=form.cleaned_data['new_password1']
-        )
-        
-        if not user:
-            messages.error(self.request, 'Invalid or expired reset link.')
-            return self.form_invalid(form)
-        
-        messages.success(self.request, 'Password reset successful! You can now log in.')
-        return super().form_valid(form)
+
+    def get(self, request, token):
+        vt = VerificationToken.objects.filter(token=token, token_type="PASSWORD_RESET", is_used=False).first()
+        if not vt or vt.expires_at < timezone.now():
+            messages.error(request, "Invalid or expired password reset token.")
+            return redirect(reverse("accounts:password_reset"))
+        form = self.form_class()
+        return render(request, self.template_name, {"form": form, "token": token})
+
+    def post(self, request, token):
+        vt = VerificationToken.objects.filter(token=token, token_type="PASSWORD_RESET", is_used=False).first()
+        if not vt or vt.expires_at < timezone.now():
+            messages.error(request, "Invalid or expired password reset token.")
+            return redirect(reverse("accounts:password_reset"))
+
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form, "token": token})
+
+        new_password = form.cleaned_data.get("new_password1")
+        user = vt.user
+        user.set_password(new_password)
+        user.save()
+        vt.is_used = True
+        vt.save()
+
+        try:
+            UserActivity.objects.create(
+                user=user,
+                action="PASSWORD_RESET",
+                ip_address=_get_client_ip(request),
+                user_agent=_get_user_agent(request),
+                metadata={},
+            )
+        except Exception:
+            pass
+
+        return redirect(reverse("accounts:password_reset_complete"))
 
 
-class PasswordResetCompleteView(View):
+class PasswordResetCompleteView(TemplateView):
     """
-    View shown after successful password reset.
-    
-    GET /accounts/password/reset/complete/
+    Page shown after successful password reset.
     """
-    template_name = 'accounts/password_reset_complete.html'
-    
-    def get(self, request):
-        """Display success message"""
-        return render(request, self.template_name)
+    template_name = "accounts/password_reset_complete.html"
 
 
 class EmailVerificationView(View):
     """
-    Email verification view.
-    
-    GET /accounts/verify-email/<token>/
+    HTML view to verify email using a token in the URL:
+    /accounts/verify-email/<str:token>/
     """
-    template_name = 'accounts/email_verification.html'
-    
     def get(self, request, token):
-        """Handle email verification"""
-        user = VerificationService.verify_email(token)
-        
+        vt = VerificationToken.objects.filter(token=token, token_type="EMAIL", is_used=False).first()
+        if not vt or vt.expires_at < timezone.now():
+            messages.error(request, "Invalid or expired verification token.")
+            return redirect(reverse("accounts:login"))
+
+        user = vt.user
+        user.is_verified = True
+        user.save()
+        vt.is_used = True
+
+        try:
+            UserActivity.objects.create(
+                user=user,
+                action="VERIFICATION",
+                ip_address=_get_client_ip(request),
+                user_agent=_get_user_agent(request),
+                metadata={"method": "email_token"},
+            )
+        except Exception:
+            pass
+
+        messages.success(request, "Email verified. You can now sign in.")
+        return redirect(reverse("accounts:login"))
+
+
+# ---------------------------
+# Lightweight DRF API Views
+# ---------------------------
+
+class UserLoginAPIView(TokenObtainPairView):
+    """
+    JWT token obtain endpoint (login).
+    Uses djangorestframework-simplejwt's TokenObtainPairView.
+    """
+    permission_classes = [permissions.AllowAny]
+
+
+class UserRegistrationAPIView(APIView):
+    """
+    API endpoint for user registration.
+    Accepts the same fields as the HTML registration form.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        data = request.data.copy()
+        form = CustomUserRegistrationForm(data)
+        if not form.is_valid():
+            return Response({"errors": form.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = form.save(commit=False)
+        user.email = (form.cleaned_data.get("email") or "").strip().lower()
+        user.role = form.cleaned_data.get("role")
+        user.first_name = form.cleaned_data.get("first_name")
+        user.last_name = form.cleaned_data.get("last_name")
+        user.phone = form.cleaned_data.get("phone")
+        user.save()
+
+        try:
+            UserActivity.objects.create(
+                user=user,
+                action="REGISTER",
+                ip_address=request.META.get("REMOTE_ADDR"),
+                user_agent=request.META.get("HTTP_USER_AGENT") or "unknown",
+                metadata={"role": user.role, "email": user.email},
+            )
+        except Exception:
+            pass
+
+        return Response({
+            "id": user.pk,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+        }, status=status.HTTP_201_CREATED)
+
+
+class UserLogoutAPIView(APIView):
+    """
+    Minimal logout endpoint. For JWT-based auth, clients typically discard tokens.
+    We still record a LOGOUT activity for auditing.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            UserActivity.objects.create(
+                user=request.user,
+                action="LOGOUT",
+                ip_address=request.META.get("REMOTE_ADDR"),
+                user_agent=request.META.get("HTTP_USER_AGENT") or "unknown",
+                metadata={},
+            )
+        except Exception:
+            pass
+        return Response({"detail": "Logged out"}, status=status.HTTP_200_OK)
+
+
+class UserProfileAPIView(APIView):
+    """
+    Return basic profile information for the authenticated user.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "id": user.pk,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.role,
+            "phone": user.phone,
+        })
+
+
+class PasswordChangeAPIView(APIView):
+    """
+    Change password for authenticated users (API).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        old = request.data.get("old_password")
+        new1 = request.data.get("new_password1")
+        new2 = request.data.get("new_password2")
+        if not request.user.check_password(old):
+            return Response({"detail": "Current password incorrect"}, status=status.HTTP_400_BAD_REQUEST)
+        if not new1 or new1 != new2:
+            return Response({"detail": "New passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
+        request.user.set_password(new1)
+        request.user.save()
+        return Response({"detail": "Password changed"}, status=status.HTTP_200_OK)
+
+
+class PasswordResetRequestAPIView(APIView):
+    """
+    Placeholder for password reset request (API).
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = (request.data.get("email") or "").strip().lower()
+        user = CustomUser.objects.filter(email__iexact=email).first()
         if user:
-            messages.success(request, 'Email verified successfully! You can now log in.')
-            return redirect('accounts:login')
-        else:
-            messages.error(request, 'Invalid or expired verification link.')
-            return render(request, self.template_name, {'success': False})
+            try:
+                vt = _create_verification_token(user, token_type="PASSWORD_RESET", days_valid=1)
+                # Optionally send email (best-effort)
+                reset_link = request.build_absolute_uri(reverse("accounts:password_reset_confirm", args=[vt.token]))
+                try:
+                    send_mail(
+                        subject="MedApp password reset",
+                        message=f"Use the following link to reset your password:\n\n{reset_link}\n\nThis link expires in 24 hours.",
+                        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                        recipient_list=[user.email],
+                        fail_silently=True,
+                    )
+                except Exception:
+                    pass
+            except Exception:
+                pass
+        return Response({"detail": "If an account exists, a reset email will be sent"}, status=status.HTTP_200_OK)
+
+
+class PasswordResetConfirmAPIView(APIView):
+    """
+    Placeholder for password reset confirm (API).
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        return Response({"detail": "Password reset confirm endpoint not implemented"}, status=status.HTTP_501_NOT_IMPLEMENTED)
+
+
+class EmailVerificationAPIView(APIView):
+    """
+    Placeholder for email verification (API).
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        return Response({"detail": "Email verification endpoint not implemented"}, status=status.HTTP_501_NOT_IMPLEMENTED)
+
+
+class UserActivityListAPIView(APIView):
+    """
+    Return recent activities for the authenticated user (up to 50).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        qs = UserActivity.objects.filter(user=request.user).order_by("-created_at")[:50]
+        data = [
+            {
+                "action": a.action,
+                "ip_address": a.ip_address,
+                "user_agent": a.user_agent,
+                "metadata": a.metadata,
+                "created_at": a.created_at,
+            }
+            for a in qs
+        ]
+        return Response({"activities": data}, status=status.HTTP_200_OK)

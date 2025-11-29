@@ -2,24 +2,25 @@
 """
 Presenters module (Factory + Adapter)
 - Responsibility: convert model instances or raw values into template-ready dicts.
-- Purpose: AUTOMATE mapping so templates only render and users never map fields manually.
+- Purpose: automate mapping so templates only render and never inspect model internals.
 - SOLID:
-  - SRP: each function has a single job (adapt a model or build an action dict).
-  - DIP: views depend on these functions rather than model internals.
+  - SRP: each function adapts one thing.
+  - DIP: views depend on these adapters/factories, not model guts.
 - Patterns:
-  - Factory: build_action centralizes creation of quick-action dicts and resolves URLs.
-  - Adapter: appointment_adapter, shift_adapter, patient_adapter, report_adapter normalize model shapes.
-- Safety: uses getattr and try/except to tolerate model changes and missing fields.
+  - Factory: build_action centralizes quick-action dict creation and resolves URLs.
+  - Adapter: appointment_adapter, shift_adapter, patient_adapter, report_adapter normalize shapes.
+- Safety: best-effort URL resolution; if reverse fails, href=None so templates render disabled UI gracefully.
 """
 
 from django.urls import reverse, NoReverseMatch
 from django.utils import timezone
 
+
 def _try_resolve_url(candidates, arg=None):
     """
-    Try to reverse a list of candidate url names. Return first successful href or None.
+    Try to reverse a list of candidate URL names. Return first successful href or None.
     candidates: iterable of url name strings (may include namespace).
-    arg: optional single positional arg to pass to reverse.
+    arg: optional single positional arg for reverse.
     """
     for name in candidates:
         try:
@@ -32,8 +33,8 @@ def _try_resolve_url(candidates, arg=None):
 def build_action(label, icon=None, url_name=None, url_arg=None, variant=None, aria_label=None, href=None):
     """
     Build a robust quick action dict for templates.
-    - Resolve url_name to href here (templates won't call {% url %}).
-    - If reverse fails, href will be None and templates render a disabled button.
+    - Resolve url_name to href here (templates shouldn't call {% url %}).
+    - If reverse fails, href will be None; templates should render a disabled button.
     """
     if href is None and url_name:
         try:
@@ -46,6 +47,7 @@ def build_action(label, icon=None, url_name=None, url_arg=None, variant=None, ar
         "variant": variant,
         "aria_label": aria_label or label,
         "href": href,
+        # Explicitly null out url_name/url_arg so templates prefer href and stay resilient
         "url_name": None,
         "url_arg": None,
     }
@@ -53,24 +55,25 @@ def build_action(label, icon=None, url_name=None, url_arg=None, variant=None, ar
 
 def appointment_adapter(appt):
     """
-    Convert an Appointment instance (appointments.models.Appointment) into the mini_card shape.
+    Convert an appointments.Appointment instance into the mini_card shape.
     Expected keys: title, subtitle, image_url, badges, kpis, href, aria_label
-    URL resolution candidates include the names present in appointments/urls.py.
     """
-    # Patient name extraction (defensive)
-    patient_name = None
+    # Patient display name (defensive)
+    title = None
     try:
         patient = getattr(appt, "patient", None)
         if patient is not None:
-            patient_name = (patient.get_full_name() if hasattr(patient, "get_full_name") else getattr(patient, "username", str(patient)))
+            if hasattr(patient, "get_full_name_or_username"):
+                title = patient.get_full_name_or_username()
+            else:
+                user = getattr(patient, "user", None)
+                title = (user.get_full_name() if hasattr(user, "get_full_name") else getattr(user, "username", None))
     except Exception:
-        patient_name = None
-
-    scheduled = getattr(appt, "scheduled_time", None)
-    title = patient_name or getattr(appt, "title", None) or str(appt)
+        pass
+    title = title or getattr(appt, "title", None) or str(appt)
 
     # Subtitle: formatted scheduled time or reason
-    subtitle = ""
+    scheduled = getattr(appt, "scheduled_time", None)
     if scheduled:
         try:
             subtitle = timezone.localtime(scheduled).strftime("%b %d, %Y %I:%M %p")
@@ -79,20 +82,21 @@ def appointment_adapter(appt):
     else:
         subtitle = getattr(appt, "reason", "") or ""
 
+    # Status badge
     status = getattr(appt, "status", None)
     badges = [{"label": str(status), "variant": "warning"}] if status else []
 
+    # KPIs
     kpis = []
     if scheduled:
         kpis.append({"label": "When", "value": subtitle})
 
-    # Resolve appointment detail URL using known candidates from appointments/urls.py
+    # Resolve appointment detail URL
     href = _try_resolve_url(
         [
-            "appointments:appointment-detail",  # matches appointments/urls.py
-            "appointments:detail",
+            "appointments:detail",            # matches your appointments/urls.py
+            "appointments:appointment-list",  # fallback to list
             "appointments:appointment-api-detail",
-            "appointments:appointment_detail",
         ],
         arg=getattr(appt, "id", None)
     )
@@ -110,16 +114,29 @@ def appointment_adapter(appt):
 
 def shift_adapter(shift):
     """
-    Convert a Shift (schedules.models.Shift) or shift-like object into mini_card shape.
-    Uses schedules app naming and fields where available.
+    Convert a schedules.Shift into mini_card shape.
     """
-    title = getattr(shift, "title", None) or f"Shift {getattr(shift, 'id', '')}"
-    # Prefer start_time for subtitle if present
-    when = getattr(shift, "start_time", None) or getattr(shift, "when", None)
-    subtitle = str(when) if when else ""
-    # Active state detection
+    # Title: duty type or fallback
+    duty = getattr(shift, "duty", None)
+    duty_type = getattr(duty, "duty_type", None)
+    title = duty_type or f"Shift {getattr(shift, 'id', '')}"
+
+    # Subtitle: day of week + start/end time
+    dow = ""
+    try:
+        dow = shift.get_day_of_week_display()
+    except Exception:
+        dow = f"Day {getattr(shift, 'day_of_week', '')}"
+
+    start = getattr(shift, "start_time", None)
+    end = getattr(shift, "end_time", None)
+    subtitle = f"{dow} {start}–{end}".strip()
+
+    # Active badge
     state = getattr(shift, "is_active", None)
     badges = [{"label": "Active" if state else "Inactive", "variant": "info"}] if state is not None else []
+
+    # KPI: duration if callable
     kpis = []
     try:
         duration_fn = getattr(shift, "duration_minutes", None)
@@ -129,8 +146,8 @@ def shift_adapter(shift):
     except Exception:
         pass
 
-    # Try to resolve schedule dashboard or calendar if useful (no per-shift detail assumed)
-    href = _try_resolve_url(["schedules:schedule-dashboard", "schedules:schedule-calendar", "schedules:schedule-list"])
+    # Link to schedules dashboard/calendar
+    href = _try_resolve_url(["schedules:schedule-dashboard", "schedules:doctor-schedules", "schedules:schedule-calendar"])
 
     return {
         "title": title,
@@ -145,26 +162,26 @@ def shift_adapter(shift):
 
 def patient_adapter(patient):
     """
-    Convert a PatientProfile or user-like object into mini_card shape.
+    Convert a PatientProfile (or user-like object) into mini_card shape.
     """
+    # Title
     title = None
     try:
-        if hasattr(patient, "full_name"):
-            title = getattr(patient, "full_name")
+        if hasattr(patient, "get_full_name_or_username"):
+            title = patient.get_full_name_or_username()
         elif hasattr(patient, "user") and hasattr(patient.user, "get_full_name"):
-            title = patient.user.get_full_name()
-        elif hasattr(patient, "get_full_name"):
-            title = patient.get_full_name()
+            title = patient.user.get_full_name() or patient.user.username
         else:
             title = str(patient)
     except Exception:
         title = str(patient)
 
-    subtitle = getattr(patient, "last_visit", "") or ""
+    subtitle = getattr(patient, "phone", "") or ""
     image_url = getattr(patient, "avatar_url", None) or None
 
-    # Try to resolve patient profile URL using patients app names
-    href = _try_resolve_url(["patients:profile", "patients:detail", "patients:profile-page"], arg=getattr(getattr(patient, "user", None), "id", None))
+    # Patient profile/detail URL: patients:detail (profile/<int:pk>/), patients:profile, patients:dashboard
+    pk = getattr(patient, "pk", None)
+    href = _try_resolve_url(["patients:detail", "patients:profile", "patients:dashboard"], arg=pk)
 
     return {
         "title": title,
@@ -179,11 +196,12 @@ def patient_adapter(patient):
 
 def report_adapter(report):
     """
-    Convert a report-like object into mini_card shape.
+    Convert a reports.Report into mini_card shape.
     """
     title = getattr(report, "title", None) or str(report)
-    subtitle = getattr(report, "summary", "") or ""
-    href = _try_resolve_url(["reports:dashboard", "reports:detail", "reports:report-detail"], arg=getattr(report, "id", None))
+    subtitle = getattr(report, "description", "") or ""
+    # Your reports app exposes a dashboard; no explicit report detail path in the URLs provided.
+    href = _try_resolve_url(["reports:dashboard"])
     return {
         "title": title,
         "subtitle": subtitle,

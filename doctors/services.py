@@ -27,6 +27,17 @@ except Exception:
     add_prescription = None
     list_prescriptions = None
 
+from datetime import datetime, timedelta
+from django.core.exceptions import ValidationError
+from django.shortcuts import get_object_or_404
+from appointments.models import Appointment, AppointmentStatus
+from prescriptions.models import Prescription
+
+from .repositories import (
+    get_or_create_doctor, upload_timetable, get_latest_timetable,
+    cancel_appointment
+)
+
 
 def ensure_doctor_profile(user, **kwargs):
     """
@@ -38,6 +49,7 @@ def ensure_doctor_profile(user, **kwargs):
         return getattr(user, "doctors_doctor_profile", None)
     except Exception:
         return None
+
 
 
 def manage_timetable(user, file_obj):
@@ -52,11 +64,13 @@ def manage_timetable(user, file_obj):
     raise ValidationError("Timetable upload not available.")
 
 
+
 def get_timetable(user):
     doctor = ensure_doctor_profile(user)
     if get_latest_timetable and doctor:
         return get_latest_timetable(doctor)
     return None
+
 
 
 def cancel_patient_appointment(user, appointment_id, reason=""):
@@ -86,22 +100,29 @@ def cancel_patient_appointment(user, appointment_id, reason=""):
     raise ValidationError("Unable to cancel appointment via service layer.")
 
 
-def give_prescription(user, patient_id, text, pdf_file=None):
+
+# ✅ Updated: prescriptions tied to appointments
+def give_prescription(user, appointment_id, notes, pdf_file=None):
     """
-    Create prescription via repository if available; otherwise create local Prescription model.
+    Create or update a prescription for a given appointment.
+    Ensures only the doctor assigned to the appointment can issue it.
     """
     doctor = ensure_doctor_profile(user)
-    if add_prescription and doctor:
-        return add_prescription(doctor, patient_id, text, pdf_file)
-    try:
-        from .models import Prescription
-        doctor_profile = ensure_doctor_profile(user)
-        if doctor_profile:
-            pres = Prescription.objects.create(doctor=doctor_profile, patient_id=patient_id, text=text, pdf_file=pdf_file)
-            return pres
-    except Exception:
-        pass
-    raise ValidationError("Unable to create prescription via service layer.")
+    appointment = get_object_or_404(Appointment, id=appointment_id, doctor=doctor)
+
+    # One-to-one: either create or update
+    pres, created = Prescription.objects.get_or_create(
+        appointment=appointment,
+        defaults={"notes": notes}
+    )
+    if not created:
+        pres.notes = notes
+
+    if pdf_file:
+        pres.pdf_file = pdf_file
+
+    pres.save()
+    return pres
 
 
 def get_doctor_prescriptions(user):
@@ -269,3 +290,33 @@ def get_recent_reports_for_doctor(user, limit=6):
         return list(qs)
     except Exception:
         return []
+    # Return all prescriptions issued by the authenticated doctor.
+    # """
+    # doctor = ensure_doctor_profile(user)
+    # return Prescription.objects.filter(appointment__doctor=doctor)
+
+
+# ✅ Slot availability for booking modal
+def get_available_slots(doctor, date=None):
+    """
+    Returns a list of available datetime slots for the given doctor.
+    - Default: today
+    - Filters out already booked slots
+    - Assumes 30-minute slots from 9 AM to 5 PM
+    """
+    if date is None:
+        date = datetime.today().date()
+
+    start_time = datetime.combine(date, datetime.min.time()).replace(hour=9)
+    end_time = datetime.combine(date, datetime.min.time()).replace(hour=17)
+
+    all_slots = [start_time + timedelta(minutes=30 * i) for i in range(16)]  # 9:00 to 17:00
+
+    booked = Appointment.objects.filter(
+        doctor=doctor,
+        scheduled_time__date=date,
+        status__in=[AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED]
+    ).values_list("scheduled_time", flat=True)
+
+    available = [slot for slot in all_slots if slot not in booked]
+    return available

@@ -1,20 +1,18 @@
-# doctors/admin.py
 from django.contrib import admin
 from .models import (
     DoctorProfile,
     Timetable,
-    Prescription,
     AppointmentCancellation,
 )
+from .forms import DoctorProfileForm
+
 
 # -------------------------------
 # Admin registration for DoctorProfile
 # -------------------------------
-from .forms import DoctorProfileForm  # ← Add this import
-
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):
-    form = DoctorProfileForm  # ← Add this line
+    form = DoctorProfileForm
 
     def specialization_label(self, obj):
         return obj.get_specialization_display()
@@ -44,15 +42,13 @@ class DoctorProfileAdmin(admin.ModelAdmin):
     autocomplete_fields = ("user",)
     date_hierarchy = "created_at"
     ordering = ("-rating", "user__first_name")
+
+
 # -------------------------------
 # Admin registration for Timetable
 # -------------------------------
 @admin.register(Timetable)
 class TimetableAdmin(admin.ModelAdmin):
-    """
-    Admin panel configuration for Timetable.
-    Displays uploaded schedule files for doctors.
-    """
     list_display = ("id", "doctor", "active", "uploaded_at", "updated_at")
     search_fields = (
         "doctor__user__username",
@@ -65,36 +61,10 @@ class TimetableAdmin(admin.ModelAdmin):
 
 
 # -------------------------------
-# Admin registration for Prescription
-# -------------------------------
-@admin.register(Prescription)
-class PrescriptionAdmin(admin.ModelAdmin):
-    """
-    Admin panel configuration for Prescription.
-    Displays prescriptions issued by doctors to patients.
-    """
-    list_display = ("id", "doctor", "patient_id", "created_at")
-    search_fields = (
-        "doctor__user__username",
-        "doctor__user__first_name",
-        "doctor__user__last_name",
-        "patient_id",
-        "text",
-    )
-    list_filter = ("created_at",)
-    date_hierarchy = "created_at"
-    ordering = ("-created_at",)
-
-
-# -------------------------------
 # Admin registration for AppointmentCancellation
 # -------------------------------
 @admin.register(AppointmentCancellation)
 class AppointmentCancellationAdmin(admin.ModelAdmin):
-    """
-    Admin panel configuration for AppointmentCancellation.
-    Tracks cancelled appointments and reasons.
-    """
     list_display = ("id", "doctor", "appointment_id", "cancelled_at")
     search_fields = (
         "doctor__user__username",

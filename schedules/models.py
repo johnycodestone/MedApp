@@ -10,7 +10,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from accounts.models import DoctorProfile, PatientProfile, HospitalProfile, Department
-
+#kdk
 
 # -------------------------------
 # Schedule Categories

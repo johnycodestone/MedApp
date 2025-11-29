@@ -30,6 +30,9 @@ from .models import (
     ScheduleCategory, Schedule, ScheduleReminder,
     Duty, Shift, AvailabilitySlot, DoctorLeave, ScheduleOverride
 )
+from doctors.models import DoctorProfile
+from accounts.models import HospitalProfile
+from django.core.exceptions import ObjectDoesNotExist
 from .serializers import (
     ScheduleCategorySerializer, ScheduleSerializer, ScheduleReminderSerializer,
     DutySerializer, ShiftSerializer, AvailabilitySlotSerializer,
@@ -243,6 +246,10 @@ class ScheduleDashboardView(TemplateView):
             status__in=['PENDING', 'CONFIRMED']
         ).order_by('start_time')[:5]
         context['categories'] = ScheduleCategory.objects.all()
+        context['crumbs'] = [
+            {"label": "Home", "url": "/"},
+            {"label": "Schedules", "url": None},
+        ]
         return context
 
 # -------------------------------
@@ -257,6 +264,154 @@ def schedule_calendar_view(request):
         Q(doctor__user=request.user) | Q(patient__user=request.user)
     )
     return render(request, 'schedules/calendar.html', {'schedules': schedules})
+
+# -------------------------------
+# Doctor Schedules View
+# -------------------------------
+@login_required
+def doctor_schedules_view(request):
+    """
+    Renders the doctor schedules page showing:
+    - Doctor's duties, shifts, availability slots
+    - Doctor's leaves and overrides
+    - Upcoming schedules
+    """
+    # Get doctor profile - ensure it's a DoctorProfile instance
+    doctor_profile = None
+    if hasattr(request.user, 'doctors_doctor_profile'):
+        try:
+            profile = request.user.doctors_doctor_profile
+            # Ensure it's actually a DoctorProfile instance, not a string or other type
+            if isinstance(profile, DoctorProfile):
+                doctor_profile = profile
+        except (DoctorProfile.DoesNotExist, ObjectDoesNotExist, AttributeError):
+            pass
+    
+    if not doctor_profile:
+        # If user is not a doctor, show empty state or redirect
+        context = {
+            'doctor_profile': None,
+            'duties': [],
+            'shifts': [],
+            'availability_slots': [],
+            'leaves': [],
+            'overrides': [],
+            'upcoming_schedules': [],
+            'crumbs': [
+                {"label": "Home", "url": "/"},
+                {"label": "Schedules", "url": "/schedules/"},
+                {"label": "Doctor Schedules", "url": None},
+            ],
+        }
+        return render(request, 'schedules/doctor_schedules.html', context)
+    
+    # Get all duties for this doctor - use doctor_profile.id to ensure we're using the ID
+    duties = Duty.objects.filter(doctor_id=doctor_profile.id).select_related('hospital', 'department').order_by('-start_date')
+    
+    # Get all shifts for these duties - use doctor_id to ensure we're using the ID
+    shifts = Shift.objects.filter(duty__doctor_id=doctor_profile.id).select_related('duty', 'duty__hospital').order_by('day_of_week', 'start_time')
+    
+    # Get availability slots (upcoming ones)
+    today = timezone.now().date()
+    availability_slots = AvailabilitySlot.objects.filter(
+        shift__duty__doctor_id=doctor_profile.id,
+        date__gte=today
+    ).select_related('shift', 'shift__duty', 'booked_by').order_by('date', 'start_time')[:50]
+    
+    # Get doctor leaves - use doctor_id
+    leaves = DoctorLeave.objects.filter(doctor_id=doctor_profile.id).order_by('-start_date')
+    
+    # Get schedule overrides - use doctor_id
+    overrides = ScheduleOverride.objects.filter(doctor_id=doctor_profile.id).order_by('-date')
+    
+    # Get upcoming schedules - use doctor_id
+    upcoming_schedules = Schedule.objects.filter(
+        doctor_id=doctor_profile.id,
+        start_time__gte=timezone.now()
+    ).select_related('patient', 'category').order_by('start_time')[:10]
+    
+    context = {
+        'doctor_profile': doctor_profile,
+        'duties': duties,
+        'shifts': shifts,
+        'availability_slots': availability_slots,
+        'leaves': leaves,
+        'overrides': overrides,
+        'upcoming_schedules': upcoming_schedules,
+        'crumbs': [
+            {"label": "Home", "url": "/"},
+            {"label": "Schedules", "url": "/schedules/"},
+            {"label": "Doctor Schedules", "url": None},
+        ],
+    }
+    return render(request, 'schedules/doctor_schedules.html', context)
+
+# -------------------------------
+# Hospital Schedules View
+# -------------------------------
+@login_required
+def hospital_schedules_view(request):
+    """
+    Renders the hospital schedules page showing:
+    - Hospital-assigned duties to doctors
+    - Shifts within duties
+    - Related schedules
+    """
+    # Get hospital profile - ensure it's a HospitalProfile instance
+    hospital_profile = None
+    if hasattr(request.user, 'accounts_hospital_profile'):
+        try:
+            profile = request.user.accounts_hospital_profile
+            # Ensure it's actually a HospitalProfile instance, not a string or other type
+            if isinstance(profile, HospitalProfile):
+                hospital_profile = profile
+        except (HospitalProfile.DoesNotExist, ObjectDoesNotExist, AttributeError):
+            pass
+    
+    if not hospital_profile:
+        # If user is not a hospital, show empty state
+        context = {
+            'hospital_profile': None,
+            'duties': [],
+            'shifts': [],
+            'related_schedules': [],
+            'crumbs': [
+                {"label": "Home", "url": "/"},
+                {"label": "Schedules", "url": "/schedules/"},
+                {"label": "Hospital Schedules", "url": None},
+            ],
+        }
+        return render(request, 'schedules/hospital_schedules.html', context)
+    
+    # Get all duties assigned by this hospital - use hospital_id to ensure we're using the ID
+    duties = Duty.objects.filter(hospital_id=hospital_profile.id).select_related('doctor', 'department').order_by('-start_date')
+    
+    # Get all shifts for these duties - use hospital_id
+    shifts = Shift.objects.filter(duty__hospital_id=hospital_profile.id).select_related('duty', 'duty__doctor', 'duty__department').order_by('duty__start_date', 'day_of_week', 'start_time')
+    
+    # Get related schedules (schedules for doctors with duties at this hospital)
+    doctor_ids = duties.values_list('doctor_id', flat=True).distinct()
+    related_schedules = Schedule.objects.filter(
+        doctor_id__in=doctor_ids,
+        start_time__gte=timezone.now()
+    ).select_related('doctor', 'patient', 'category').order_by('start_time')[:20]
+    
+    # Get unique doctor count
+    unique_doctors_count = duties.values('doctor').distinct().count()
+    
+    context = {
+        'hospital_profile': hospital_profile,
+        'duties': duties,
+        'shifts': shifts,
+        'related_schedules': related_schedules,
+        'unique_doctors_count': unique_doctors_count,
+        'crumbs': [
+            {"label": "Home", "url": "/"},
+            {"label": "Schedules", "url": "/schedules/"},
+            {"label": "Hospital Schedules", "url": None},
+        ],
+    }
+    return render(request, 'schedules/hospital_schedules.html', context)
 
 # -------------------------------
 # Error Handler Views

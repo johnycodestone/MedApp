@@ -1,0 +1,710 @@
+/* ============================================================================
+   prescriptions.css
+   Purpose:
+     - Styles for prescriptions app (list, create, detail pages)
+     - Prescription cards, medication forms, and detail views
+   
+   Usage:
+     - Loaded in prescriptions templates after base.css
+   ============================================================================ */
+
+/* ============================================================================
+   PRESCRIPTIONS LIST PAGE
+   ============================================================================ */
+
+/* Container */
+.prescriptions-container {
+  max-width: var(--max-width-xl);
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+/* Page Header */
+.prescriptions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-8);
+}
+
+.prescriptions-header h1 {
+  font-size: var(--fs-4xl);
+  margin-bottom: var(--space-2);
+}
+
+.header-subtitle {
+  color: var(--text-muted);
+  font-size: var(--fs-lg);
+  margin: 0;
+}
+
+/* Filters Section */
+.prescriptions-filters {
+  background: var(--card-bg);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.filter-tab {
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filter-tab:hover {
+  background: var(--primary-pale);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.filter-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.filter-search {
+  margin-top: var(--space-4);
+}
+
+/* Prescriptions Grid */
+.prescriptions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--space-6);
+}
+
+/* Prescription Card */
+.prescription-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+.prescription-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.prescription-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.prescription-meta {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.prescription-icon {
+  font-size: 32px;
+}
+
+.prescription-id {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.prescription-date {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.prescription-status .badge {
+  font-size: var(--fs-xs);
+}
+
+/* Prescription Parties */
+.prescription-parties {
+  margin-bottom: var(--space-4);
+}
+
+.party-info {
+  margin-bottom: var(--space-3);
+}
+
+.party-info label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-1);
+}
+
+.party-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.party-icon {
+  font-size: 20px;
+}
+
+.party-specialty {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+/* Medications List */
+.prescription-medications {
+  margin-bottom: var(--space-4);
+}
+
+.prescription-medications label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.medications-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.medication-item {
+  padding: var(--space-3);
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+}
+
+.medication-item:last-child {
+  margin-bottom: 0;
+}
+
+.medication-name {
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.medication-details {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* Prescription Notes */
+.prescription-notes {
+  margin-bottom: var(--space-4);
+}
+
+.prescription-notes label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.prescription-notes p {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Prescription Actions */
+.prescription-actions {
+  display: flex;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: var(--space-16);
+  background: var(--card-bg);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.empty-icon {
+  font-size: 80px;
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: var(--fs-2xl);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state p {
+  color: var(--text-muted);
+  margin-bottom: var(--space-6);
+}
+
+/* ============================================================================
+   PRESCRIPTION CREATE PAGE
+   ============================================================================ */
+
+/* Container */
+.prescription-create-container {
+  max-width: var(--max-width-lg);
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+/* Page Header */
+.prescription-create-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.prescription-create-header h1 {
+  font-size: var(--fs-4xl);
+  margin-bottom: var(--space-2);
+}
+
+/* Create Card */
+.prescription-create-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Form Section */
+.form-section {
+  margin-bottom: var(--space-8);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.section-title {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+/* Medication Form Item */
+.medication-form-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-4);
+}
+
+.medication-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.medication-form-header h4 {
+  font-size: var(--fs-lg);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.btn-remove {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  color: var(--error);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-remove:hover {
+  background: var(--error-bg);
+}
+
+/* ============================================================================
+   PRESCRIPTION DETAIL PAGE
+   ============================================================================ */
+
+/* Container */
+.prescription-detail-container {
+  max-width: var(--max-width-lg);
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+/* Detail Card */
+.prescription-detail-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Detail Header */
+.prescription-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
+  border-bottom: 2px solid var(--border);
+}
+
+.detail-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.prescription-icon-large {
+  font-size: 64px;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-pale);
+  border-radius: var(--radius-xl);
+}
+
+.prescription-header-info h1 {
+  font-size: var(--fs-3xl);
+  margin-bottom: var(--space-2);
+}
+
+.prescription-date-large {
+  font-size: var(--fs-base);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.detail-header-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* Parties Section */
+.prescription-parties-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.party-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.party-card label {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-3);
+  display: block;
+}
+
+.party-details {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.party-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--primary-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.party-info-detailed h3 {
+  font-size: var(--fs-xl);
+  margin-bottom: var(--space-1);
+}
+
+.party-info-detailed p {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin: var(--space-1) 0;
+}
+
+/* Medications Detail Section */
+.medications-detail-section {
+  margin-bottom: var(--space-8);
+}
+
+.section-heading {
+  font-size: var(--fs-2xl);
+  margin-bottom: var(--space-6);
+}
+
+.medications-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.medication-detail-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.medication-detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.medication-number {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-lg);
+}
+
+.medication-name-large {
+  font-size: var(--fs-2xl);
+  margin: 0;
+}
+
+.medication-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.medication-detail-item label {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.detail-value {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.medication-instructions {
+  background: var(--info-bg);
+  border-left: 4px solid var(--info);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.medication-instructions label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--info);
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.medication-instructions p {
+  font-size: var(--fs-base);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Notes Section */
+.notes-detail-section {
+  margin-bottom: var(--space-8);
+}
+
+.notes-content {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.notes-content p {
+  font-size: var(--fs-base);
+  line-height: var(--lh-relaxed);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Disclaimer */
+.prescription-disclaimer {
+  background: var(--warning-bg);
+  border-left: 4px solid var(--warning);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+.prescription-disclaimer h4 {
+  font-size: var(--fs-lg);
+  color: var(--warning);
+  margin-bottom: var(--space-3);
+}
+
+.prescription-disclaimer ul {
+  margin: 0;
+  padding-left: var(--space-6);
+}
+
+.prescription-disclaimer li {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+/* Detail Actions */
+.prescription-detail-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+  .prescriptions-header,
+  .prescriptions-filters,
+  .prescription-actions,
+  .detail-header-actions,
+  .prescription-detail-actions {
+    display: none !important;
+  }
+
+  .prescription-detail-card {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+  .prescriptions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .prescription-parties-section {
+    grid-template-columns: 1fr;
+  }
+
+  .medication-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .prescriptions-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .filter-tabs {
+    flex-wrap: wrap;
+  }
+
+  .prescription-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  .detail-header-actions {
+    width: 100%;
+  }
+
+  .detail-header-actions .btn {
+    flex: 1;
+  }
+
+  .prescription-detail-actions {
+    flex-direction: column;
+  }
+
+  .prescription-detail-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .prescriptions-container,
+  .prescription-create-container,
+  .prescription-detail-container {
+    padding: var(--space-4);
+  }
+
+  .prescription-detail-card,
+  .prescription-create-card {
+    padding: var(--space-4);
+  }
+
+  .prescription-icon-large {
+    width: 60px;
+    height: 60px;
+    font-size: 48px;
+  }
+
+  .party-details {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

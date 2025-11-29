@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard - MedApp{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'adminpanel/css/admin.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  {% include "adminpanel/includes/admin_sidebar.html" %}
+
+  <div class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>📊 Admin Dashboard</h1>
+        <p class="admin-subtitle">Welcome back, {{ user.get_full_name|default:user.username }}!</p>
+      </div>
+    </div>
+
+    {# Stats Cards #}
+    <div class="stats-grid">
+      <div class="stat-card stat-card-primary">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ total_users|default:0 }}</h3>
+          <p class="stat-label">Total Users</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-success">
+        <div class="stat-icon">📅</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ total_appointments|default:0 }}</h3>
+          <p class="stat-label">Appointments</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-warning">
+        <div class="stat-icon">💊</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ total_prescriptions|default:0 }}</h3>
+          <p class="stat-label">Prescriptions</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-info">
+        <div class="stat-icon">⚙️</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ active_configs|default:0 }}</h3>
+          <p class="stat-label">Active Configs</p>
+        </div>
+      </div>
+    </div>
+
+    {# Charts Row #}
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>User Growth (Last 7 Days)</h3>
+        <div class="chart-container">
+          <canvas id="userGrowthChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>User Distribution</h3>
+        <div class="chart-container">
+          <canvas id="userDistributionChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    {# Activity Feed #}
+    <div class="activity-row">
+      <div class="activity-card">
+        <h3>Recent System Logs</h3>
+        <div class="activity-feed">
+          {% for log in recent_logs %}
+            <div class="activity-item {% if log.level == 'ERROR' %}error{% elif log.level == 'WARNING' %}warning{% else %}success{% endif %}">
+              <div class="activity-item-header">
+                <span class="activity-item-title">{{ log.level }}</span>
+                <span class="activity-item-time">{{ log.created_at|timesince }} ago</span>
+              </div>
+              <div class="activity-item-message">{{ log.message|truncatewords:15 }}</div>
+            </div>
+          {% empty %}
+            <p class="text-muted">No recent logs</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <h3>Recent Backups</h3>
+        <div class="activity-feed">
+          {% for backup in recent_backups %}
+            <div class="activity-item {% if backup.status == 'COMPLETED' %}success{% elif backup.status == 'FAILED' %}error{% else %}warning{% endif %}">
+              <div class="activity-item-header">
+                <span class="activity-item-title">{{ backup.get_backup_type_display }}</span>
+                <span class="activity-item-time">{{ backup.started_at|timesince }} ago</span>
+              </div>
+              <div class="activity-item-message">Status: {{ backup.status }}</div>
+            </div>
+          {% empty %}
+            <p class="text-muted">No recent backups</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# Quick Actions #}
+    <div class="quick-actions">
+      <button class="quick-action-btn" data-action="create-backup">
+        <span>💾</span> Create Backup
+      </button>
+      <button class="quick-action-btn" data-action="view-audit">
+        <span>📊</span> View Audit Logs
+      </button>
+      <button class="quick-action-btn" data-action="manage-configs">
+        <span>⚙️</span> Manage Configs
+      </button>
+      <button class="quick-action-btn" data-action="export-data">
+        <span>📤</span> Export Data
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'adminpanel/js/admin.js' %}"></script>
+{% endblock %}

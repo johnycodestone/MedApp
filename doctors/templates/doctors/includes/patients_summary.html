@@ -1,0 +1,25 @@
+<!--
+  File: doctors/templates/doctors/includes/patients_summary.html
+  Purpose:
+    - Compact list of assigned patients or recent consults.
+  SOLID & Patterns:
+    - SRP: rendering only; presenters adapt patient models to mini_card shape.
+-->
+<section class="panel">
+  <header class="panel-header">
+    <h2 class="panel-title">Assigned Patients</h2>
+    <p class="panel-subtitle text-muted">Recent consults and active patients</p>
+  </header>
+
+  <div class="panel-body">
+    {% if patients %}
+      <div class="mini-grid">
+        {% for p in patients %}
+          {% include "components/mini_card.html" with item=p title=p.title subtitle=p.subtitle image_url=p.image_url badges=p.badges kpis=p.kpis href=p.href url_name=p.url_name url_arg=p.url_arg aria_label=p.aria_label target=p.target %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "components/empty_state.html" with title="No active patients" message="You currently have no active patients assigned." icon="🧑‍⚕️" action_label="View patients" url_name="patients:list" %}
+    {% endif %}
+  </div>
+</section>

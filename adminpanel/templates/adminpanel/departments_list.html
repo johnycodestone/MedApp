@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Departments Management - Admin Panel{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'adminpanel/css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  {% include "adminpanel/includes/admin_sidebar.html" %}
+
+  <div class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>🏢 Departments Management</h1>
+        <p class="admin-subtitle">Manage hospital departments</p>
+      </div>
+      <div>
+        <button class="btn btn-primary">➕ Add Department</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <h3>All Departments</h3>
+      </div>
+
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for department in departments %}
+              <tr>
+                <td>#{{ department.id }}</td>
+                <td><strong>{{ department.name }}</strong></td>
+                <td>{{ department.description|truncatewords:15|default:"No description" }}</td>
+                <td>{{ department.created_at|date:"M d, Y"|default:"N/A" }}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn-icon" title="View">👁️</button>
+                    <button class="btn-icon" title="Edit">✏️</button>
+                    <button class="btn-icon" title="Delete">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center">No departments found</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'adminpanel/js/admin.js' %}"></script>
+{% endblock %}

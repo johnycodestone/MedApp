@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}System Logs - Admin Panel{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'adminpanel/css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  {% include "adminpanel/includes/admin_sidebar.html" %}
+
+  <div class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>📋 System Logs</h1>
+        <p class="admin-subtitle">Monitor system activity and errors</p>
+      </div>
+    </div>
+
+    {# Stats Cards #}
+    <div class="stats-grid">
+      <div class="stat-card stat-card-primary">
+        <div class="stat-icon">🔴</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ error_count }}</h3>
+          <p class="stat-label">Errors</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-warning">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ warning_count }}</h3>
+          <p class="stat-label">Warnings</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-info">
+        <div class="stat-icon">ℹ️</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ info_count }}</h3>
+          <p class="stat-label">Info</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-success">
+        <div class="stat-icon">🐛</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ debug_count }}</h3>
+          <p class="stat-label">Debug</p>
+        </div>
+      </div>
+    </div>
+
+    {# Filters #}
+    <div class="filters-card">
+      <form method="get">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label class="filter-label">Level</label>
+            <select name="level" class="form-select">
+              <option value="">All Levels</option>
+              <option value="CRITICAL" {% if level_filter == 'CRITICAL' %}selected{% endif %}>Critical</option>
+              <option value="ERROR" {% if level_filter == 'ERROR' %}selected{% endif %}>Error</option>
+              <option value="WARNING" {% if level_filter == 'WARNING' %}selected{% endif %}>Warning</option>
+              <option value="INFO" {% if level_filter == 'INFO' %}selected{% endif %}>Info</option>
+              <option value="DEBUG" {% if level_filter == 'DEBUG' %}selected{% endif %}>Debug</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Category</label>
+            <select name="category" class="form-select">
+              <option value="">All Categories</option>
+              <option value="AUTHENTICATION" {% if category_filter == 'AUTHENTICATION' %}selected{% endif %}>Authentication</option>
+              <option value="DATABASE" {% if category_filter == 'DATABASE' %}selected{% endif %}>Database</option>
+              <option value="SECURITY" {% if category_filter == 'SECURITY' %}selected{% endif %}>Security</option>
+              <option value="API" {% if category_filter == 'API' %}selected{% endif %}>API</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Search</label>
+            <input type="text" name="search" class="form-control" placeholder="Search logs..." value="{{ search }}">
+          </div>
+
+          <div class="filter-group" style="align-self: flex-end;">
+            <button type="submit" class="btn btn-primary">Filter</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    {# Log Entries #}
+    <div class="table-card">
+      <div class="log-entries">
+        {% for log in logs %}
+          <div class="log-entry {% if log.level == 'ERROR' or log.level == 'CRITICAL' %}error{% elif log.level == 'WARNING' %}warning{% else %}success{% endif %}">
+            <div class="log-entry-header">
+              <div>
+                <span class="badge badge-{% if log.level == 'ERROR' %}danger{% elif log.level == 'WARNING' %}warning{% else %}info{% endif %}">
+                  {{ log.level }}
+                </span>
+                <span class="badge badge-secondary">{{ log.category }}</span>
+                <span class="log-entry-message">{{ log.message|truncatewords:20 }}</span>
+              </div>
+              <span class="log-entry-time">{{ log.created_at|date:"M d, Y H:i:s" }}</span>
+            </div>
+            <div class="log-entry-details">
+              <p><strong>Full Message:</strong> {{ log.message }}</p>
+              {% if log.user %}
+                <p><strong>User:</strong> {{ log.user.username }}</p>
+              {% endif %}
+              {% if log.ip_address %}
+                <p><strong>IP:</strong> {{ log.ip_address }}</p>
+              {% endif %}
+              {% if log.path %}
+                <p><strong>Path:</strong> {{ log.path }}</p>
+              {% endif %}
+              {% if log.metadata %}
+                <p><strong>Metadata:</strong> <code>{{ log.metadata }}</code></p>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="empty-state">
+            <h3>No logs found</h3>
+            <p>No system logs match your filters.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'adminpanel/js/admin.js' %}"></script>
+{% endblock %}

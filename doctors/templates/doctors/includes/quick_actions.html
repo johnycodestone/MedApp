@@ -1,0 +1,13 @@
+<!--
+  File: doctors/templates/doctors/includes/quick_actions.html
+  Purpose:
+    - Doctor-specific wrapper that prepares/passes actions to the root quick_actions component.
+  Notes:
+    - This wrapper keeps doctor-specific defaults here while reusing the root quick_actions.html.
+    - Uses Factory pattern via presenters.build_action in the view (see presenters.py).
+  SOLID:
+    - SRP: wrapper only passes actions; mapping/resolution is done in presenters/views.
+-->
+<div class="doctors-quick-actions">
+  {% include "components/quick_actions.html" with actions=actions %}
+</div>

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile - MedApp{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'accounts/css/accounts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container profile-edit-container">
+  {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+
+  {# Display Django messages #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="profile-edit-card">
+    <div class="profile-edit-header">
+      <h1>Edit Profile</h1>
+      <p class="text-muted">Update your personal information</p>
+    </div>
+
+    <form method="post" action="{% url 'accounts:profile_edit' %}" id="profileEditForm" class="profile-edit-form">
+      {% csrf_token %}
+
+      {# Name Fields - Side by Side #}
+      <div class="form-row">
+        <div class="form-group">
+          <label for="id_first_name">First Name *</label>
+          <input 
+            type="text" 
+            name="first_name" 
+            id="id_first_name"
+            class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+            value="{{ form.first_name.value|default:user.first_name }}"
+            required
+          >
+          {% if form.first_name.errors %}
+            <div class="form-error">{{ form.first_name.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="id_last_name">Last Name *</label>
+          <input 
+            type="text" 
+            name="last_name" 
+            id="id_last_name"
+            class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+            value="{{ form.last_name.value|default:user.last_name }}"
+            required
+          >
+          {% if form.last_name.errors %}
+            <div class="form-error">{{ form.last_name.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Email Field #}
+      <div class="form-group">
+        <label for="id_email">Email Address *</label>
+        <input 
+          type="email" 
+          name="email" 
+          id="id_email"
+          class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+          value="{{ form.email.value|default:user.email }}"
+          required
+        >
+        {% if form.email.errors %}
+          <div class="form-error">{{ form.email.errors.0 }}</div>
+        {% endif %}
+        <small class="form-help">Changing your email will require verification</small>
+      </div>
+
+      {# Phone Field #}
+      <div class="form-group">
+        <label for="id_phone">Phone Number</label>
+        <input 
+          type="tel" 
+          name="phone" 
+          id="id_phone"
+          class="form-control {% if form.phone.errors %}is-invalid{% endif %}"
+          value="{{ form.phone.value|default:user.phone }}"
+          placeholder="+1234567890"
+        >
+        {% if form.phone.errors %}
+          <div class="form-error">{{ form.phone.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# Non-field errors #}
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">
+          {{ form.non_field_errors.0 }}
+        </div>
+      {% endif %}
+
+      {# Form Actions #}
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+          Save Changes
+        </button>
+        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'accounts/js/accounts.js' %}"></script>
+{% endblock %}

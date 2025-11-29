@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create Prescription - MedApp{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'prescriptions/css/prescriptions.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container prescription-create-container">
+  {# Breadcrumbs #}
+  {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+
+  {# Page Header #}
+  <div class="prescription-create-header">
+    <h1>📝 Create New Prescription</h1>
+    <p class="text-muted">Fill in the details below to create a prescription for your patient</p>
+  </div>
+
+  {# Display Django messages #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="prescription-create-card">
+    <form method="post" action="{% url 'prescriptions:create' %}" id="createPrescriptionForm">
+      {% csrf_token %}
+
+      {# Patient Selection #}
+      <div class="form-section">
+        <h3 class="section-title">Patient Information</h3>
+        
+        <div class="form-group">
+          <label for="id_patient">Select Patient *</label>
+          <select 
+            name="patient" 
+            id="id_patient"
+            class="form-control {% if form.patient.errors %}is-invalid{% endif %}"
+            required
+          >
+            <option value="">Choose a patient...</option>
+            {# In real implementation, populate from database #}
+            <option value="1">John Doe</option>
+            <option value="2">Jane Smith</option>
+          </select>
+          {% if form.patient.errors %}
+            <div class="form-error">{{ form.patient.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Medications Section #}
+      <div class="form-section">
+        <div class="section-header">
+          <h3 class="section-title">Medications</h3>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="addMedicationBtn">
+            <span>➕</span> Add Medication
+          </button>
+        </div>
+
+        <div id="medicationsContainer">
+          {# Medication items will be added dynamically #}
+          <div class="medication-form-item" data-index="0">
+            <div class="medication-form-header">
+              <h4>Medication 1</h4>
+              <button type="button" class="btn-remove" onclick="removeMedication(0)" style="display: none;">
+                <span>🗑️</span> Remove
+              </button>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="med_name_0">Medication Name *</label>
+                <input 
+                  type="text" 
+                  name="medications[0][name]" 
+                  id="med_name_0"
+                  class="form-control"
+                  placeholder="e.g., Ibuprofen"
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="med_dosage_0">Dosage *</label>
+                <input 
+                  type="text" 
+                  name="medications[0][dosage]" 
+                  id="med_dosage_0"
+                  class="form-control"
+                  placeholder="e.g., 200mg"
+                  required
+                >
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="med_frequency_0">Frequency *</label>
+                <select 
+                  name="medications[0][frequency]" 
+                  id="med_frequency_0"
+                  class="form-control"
+                  required
+                >
+                  <option value="">Select frequency...</option>
+                  <option value="Once daily">Once daily</option>
+                  <option value="Twice daily">Twice daily</option>
+                  <option value="Three times daily">Three times daily</option>
+                  <option value="Four times daily">Four times daily</option>
+                  <option value="Every 4 hours">Every 4 hours</option>
+                  <option value="Every 6 hours">Every 6 hours</option>
+                  <option value="Every 8 hours">Every 8 hours</option>
+                  <option value="As needed">As needed</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="med_duration_0">Duration *</label>
+                <input 
+                  type="text" 
+                  name="medications[0][duration]" 
+                  id="med_duration_0"
+                  class="form-control"
+                  placeholder="e.g., 7 days"
+                  required
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Additional Notes #}
+      <div class="form-section">
+        <h3 class="section-title">Additional Notes</h3>
+        
+        <div class="form-group">
+          <label for="id_notes">Notes (Optional)</label>
+          <textarea 
+            name="notes" 
+            id="id_notes"
+            class="form-control {% if form.notes.errors %}is-invalid{% endif %}"
+            rows="4"
+            placeholder="Add any special instructions or notes for the patient..."
+          >{{ form.notes.value|default:'' }}</textarea>
+          {% if form.notes.errors %}
+            <div class="form-error">{{ form.notes.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Non-field errors #}
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">
+          {{ form.non_field_errors.0 }}
+        </div>
+      {% endif %}
+
+      {# Form Actions #}
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <span>💾</span> Create Prescription
+        </button>
+        <a href="{% url 'prescriptions:list' %}" class="btn btn-secondary btn-lg">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  {# Medication Template (hidden, used for cloning) #}
+  <template id="medicationTemplate">
+    <div class="medication-form-item" data-index="">
+      <div class="medication-form-header">
+        <h4>Medication <span class="medication-number"></span></h4>
+        <button type="button" class="btn-remove" onclick="removeMedication()">
+          <span>🗑️</span> Remove
+        </button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Medication Name *</label>
+          <input 
+            type="text" 
+            name="medications[][name]" 
+            class="form-control"
+            placeholder="e.g., Ibuprofen"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label>Dosage *</label>
+          <input 
+            type="text" 
+            name="medications[][dosage]" 
+            class="form-control"
+            placeholder="e.g., 200mg"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Frequency *</label>
+          <select 
+            name="medications[][frequency]" 
+            class="form-control"
+            required
+          >
+            <option value="">Select frequency...</option>
+            <option value="Once daily">Once daily</option>
+            <option value="Twice daily">Twice daily</option>
+            <option value="Three times daily">Three times daily</option>
+            <option value="Four times daily">Four times daily</option>
+            <option value="Every 4 hours">Every 4 hours</option>
+            <option value="Every 6 hours">Every 6 hours</option>
+            <option value="Every 8 hours">Every 8 hours</option>
+            <option value="As needed">As needed</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Duration *</label>
+          <input 
+            type="text" 
+            name="medications[][duration]" 
+            class="form-control"
+            placeholder="e.g., 7 days"
+            required
+          >
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'prescriptions/js/prescriptions.js' %}"></script>
+{% endblock %}

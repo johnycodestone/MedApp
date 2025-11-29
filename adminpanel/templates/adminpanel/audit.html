@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Audit Trail - Admin Panel{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'adminpanel/css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  {% include "adminpanel/includes/admin_sidebar.html" %}
+
+  <div class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>📊 Audit Trail</h1>
+        <p class="admin-subtitle">Track all system changes and user actions</p>
+      </div>
+    </div>
+
+    {# Stats Cards #}
+    <div class="stats-grid">
+      <div class="stat-card stat-card-success">
+        <div class="stat-icon">➕</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ create_count }}</h3>
+          <p class="stat-label">Created</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-info">
+        <div class="stat-icon">✏️</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ update_count }}</h3>
+          <p class="stat-label">Updated</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-warning">
+        <div class="stat-icon">🗑️</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ delete_count }}</h3>
+          <p class="stat-label">Deleted</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-primary">
+        <div class="stat-icon">👁️</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ view_count }}</h3>
+          <p class="stat-label">Viewed</p>
+        </div>
+      </div>
+    </div>
+
+    {# Filters #}
+    <div class="filters-card">
+      <form method="get">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label class="filter-label">Action</label>
+            <select name="action" class="form-select">
+              <option value="">All Actions</option>
+              <option value="CREATE" {% if action_filter == 'CREATE' %}selected{% endif %}>Create</option>
+              <option value="UPDATE" {% if action_filter == 'UPDATE' %}selected{% endif %}>Update</option>
+              <option value="DELETE" {% if action_filter == 'DELETE' %}selected{% endif %}>Delete</option>
+              <option value="VIEW" {% if action_filter == 'VIEW' %}selected{% endif %}>View</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Model</label>
+            <select name="model" class="form-select">
+              <option value="">All Models</option>
+              <option value="CustomUser" {% if model_filter == 'CustomUser' %}selected{% endif %}>User</option>
+              <option value="Appointment" {% if model_filter == 'Appointment' %}selected{% endif %}>Appointment</option>
+              <option value="Prescription" {% if model_filter == 'Prescription' %}selected{% endif %}>Prescription</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Search</label>
+            <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search }}">
+          </div>
+
+          <div class="filter-group" style="align-self: flex-end;">
+            <button type="submit" class="btn btn-primary">Filter</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    {# Audit Timeline #}
+    <div class="table-card">
+      <div class="audit-timeline">
+        {% for audit in audit_logs %}
+          <div class="audit-entry">
+            <div class="audit-indicator {{ audit.action|lower }}">
+              {% if audit.action == 'CREATE' %}➕
+              {% elif audit.action == 'UPDATE' %}✏️
+              {% elif audit.action == 'DELETE' %}🗑️
+              {% else %}👁️{% endif %}
+            </div>
+            <div class="audit-content">
+              <div class="audit-header">
+                <div>
+                  <span class="badge badge-{% if audit.action == 'CREATE' %}success{% elif audit.action == 'UPDATE' %}info{% elif audit.action == 'DELETE' %}danger{% else %}primary{% endif %}">
+                    {{ audit.action }}
+                  </span>
+                  <span class="audit-action">{{ audit.model_name }} - {{ audit.object_repr|truncatewords:10 }}</span>
+                </div>
+                <span class="audit-time">{{ audit.created_at|date:"M d, Y H:i" }}</span>
+              </div>
+              <div class="audit-details">
+                <p><strong>User:</strong> {{ audit.user.username|default:"System" }}</p>
+                {% if audit.ip_address %}
+                  <p><strong>IP:</strong> {{ audit.ip_address }}</p>
+                {% endif %}
+                {% if audit.changes %}
+                  <p><strong>Changes:</strong> <code>{{ audit.changes|truncatewords:20 }}</code></p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="empty-state">
+            <h3>No audit logs found</h3>
+            <p>No audit logs match your filters.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'adminpanel/js/admin.js' %}"></script>
+{% endblock %}

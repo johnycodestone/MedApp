@@ -1,4 +1,4 @@
-<!-- {#
+<!--
   Component: quick_actions.html
   Purpose:
     - Render a panel of prominent action buttons (e.g., Manage Appointments, Assign Duty).
@@ -15,48 +15,46 @@
     - If both href and url_name are missing, the button will render disabled for clarity.
 
   Styling:
+    - Uses Bootstrap classes for professional layout and hover effects.
     - Inherits root-level styles via interactions.css and base.css.
-    - Apps may add local CSS to refine spacing or variants without editing this file.
-#} -->
+    - Apps may override spacing or variants locally if needed.
+-->
 
-<div class="qa-panel" role="group" aria-label="Quick actions">
-  <ul class="qa-list">
+<div class="qa-panel container py-3" role="group" aria-label="Quick actions">
+  <div class="row g-3 justify-content-start">
     {% for action in actions %}
-      {# Determine link target: prefer explicit href, otherwise reverse url_name if provided #}
       {% if action.href %}
         {% with link=action.href %}
-          <li class="qa-item">
-            <a class="qa-button {% if action.variant %}qa-{{ action.variant }}{% else %}qa-primary{% endif %}"
+          <div class="col-12 col-sm-6 col-lg-3">
+            <a class="btn btn-lg w-100 {% if action.variant %}btn-{{ action.variant }}{% else %}btn-primary{% endif %} shadow-sm transition"
                href="{{ link }}"
                aria-label="{{ action.aria_label|default:action.label }}">
-              {% if action.icon %}<span class="qa-icon">{{ action.icon }}</span>{% endif %}
-              <span class="qa-label">{{ action.label }}</span>
+              {% if action.icon %}<span class="me-2">{{ action.icon }}</span>{% endif %}
+              {{ action.label }}
             </a>
-          </li>
+          </div>
         {% endwith %}
       {% elif action.url_name %}
-        <li class="qa-item">
-          <a class="qa-button {% if action.variant %}qa-{{ action.variant }}{% else %}qa-primary{% endif %}"
+        <div class="col-12 col-sm-6 col-lg-3">
+          <a class="btn btn-lg w-100 {% if action.variant %}btn-{{ action.variant }}{% else %}btn-primary{% endif %} shadow-sm transition"
              href="{% if action.url_arg %}{% url action.url_name action.url_arg %}{% else %}{% url action.url_name %}{% endif %}"
              aria-label="{{ action.aria_label|default:action.label }}">
-            {% if action.icon %}<span class="qa-icon">{{ action.icon }}</span>{% endif %}
-            <span class="qa-label">{{ action.label }}</span>
+            {% if action.icon %}<span class="me-2">{{ action.icon }}</span>{% endif %}
+            {{ action.label }}
           </a>
-        </li>
+        </div>
       {% else %}
-        {# Fallback: render a disabled button if no navigation target is available #}
-        <li class="qa-item">
-          <button class="qa-button qa-disabled" type="button" disabled aria-disabled="true">
-            {% if action.icon %}<span class="qa-icon">{{ action.icon }}</span>{% endif %}
-            <span class="qa-label">{{ action.label }}</span>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <button class="btn btn-lg w-100 btn-secondary shadow-sm transition" type="button" disabled aria-disabled="true">
+            {% if action.icon %}<span class="me-2">{{ action.icon }}</span>{% endif %}
+            {{ action.label }}
           </button>
-        </li>
+        </div>
       {% endif %}
     {% empty %}
-      {# No actions provided; component renders nothing or a minimal notice #}
-      <li class="qa-item">
+      <div class="col-12">
         <span class="text-muted">No actions available</span>
-      </li>
+      </div>
     {% endfor %}
-  </ul>
+  </div>
 </div>

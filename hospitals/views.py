@@ -225,7 +225,7 @@ class HospitalDashboardView(LoginRequiredMixin, TemplateView):
             ],
             "actions": [
                 {"label": "Manage Appointments", "icon": "📅", "url_name": "appointments:appointment-list", "variant": "primary"},
-                {"label": "Manage Doctors", "icon": "⚕️", "url_name": "doctors:doctor-list", "variant": "secondary"},
+                {"label": "Manage Doctors", "icon": "⚕️", "url_name": "doctors:doctor-list", "variant": "primary"},
                 {"label": "Manage Departments", "icon": "🏥", "url_name": "departments:page-list"},
                 {"label": "View Reports", "icon": "📊", "url_name": "reports:dashboard"},
             ],

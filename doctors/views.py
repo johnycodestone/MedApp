@@ -1,4 +1,15 @@
 # doctors/views.py
+"""
+Existing views preserved. New DoctorDashboardView appended at the end.
+- All original API and HTML views are left unchanged.
+- New dashboard view is additive and uses presenters + services.
+- SOLID:
+  - SRP: existing views keep their responsibilities.
+  - DIP: new view depends on services/presenters abstractions.
+- Patterns:
+  - Template Method (conceptual): dashboard view orchestrates steps and delegates mapping.
+"""
+
 from django.views.generic import ListView
 from django.db.models import Q
 from django.views import View
@@ -186,3 +197,89 @@ class DoctorDetailView(View):
             ],
         }
         return render(request, "doctors/doctor_detail.html", context)
+
+
+# ---------------------------
+# Section C: New - Doctor Dashboard (additive)
+# ---------------------------
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
+
+# Import presenters and dashboard helpers (added modules)
+from . import presenters
+from . import services as dashboard_services
+
+class DoctorDashboardView(LoginRequiredMixin, TemplateView):
+    """
+    Doctor user account dashboard.
+    - Non-destructive addition: does not modify existing views.
+    - Orchestrates data retrieval via services and mapping via presenters.
+    - SOLID:
+      - SRP: view only orchestrates; presenters/services handle mapping and data access.
+      - DIP: view depends on service/presenter abstractions.
+    - Patterns:
+      - Template Method (conceptual): get_context_data defines the skeleton.
+      - Factory/Adapter: presenters.build_action and adapters used to create template-ready dicts.
+    """
+    template_name = "doctors/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        # Breadcrumbs
+        ctx["crumbs"] = [
+            {"label": "Home", "href": "/"},
+            {"label": "Doctors", "href": "/doctors/"},
+            {"label": "Dashboard", "href": None},
+        ]
+
+        # Build quick actions using presenters (factory). If reverse fails, href will be None.
+        ctx["actions"] = [
+            presenters.build_action("My Appointments", icon="📅", url_name="appointments:appointment-list", variant="primary"),
+            presenters.build_action("My Patients", icon="🧑‍⚕️", url_name="patients:list", variant="success"),
+            presenters.build_action("My Shifts", icon="🕒", url_name="shifts:list", variant="info"),
+            presenters.build_action("My Reports", icon="📊", url_name="reports:dashboard", variant="secondary"),
+        ]
+
+        # KPIs: use dashboard_services which are additive and safe
+        try:
+            ctx["kpis"] = [
+                {"label": "Today Appointments", "value": dashboard_services.count_todays_appointments(self.request.user), "icon": "📅"},
+                {"label": "On-Call Now", "value": dashboard_services.count_current_oncall(self.request.user), "icon": "🕒"},
+                {"label": "Active Patients", "value": dashboard_services.count_active_patients(self.request.user), "icon": "🧑‍⚕️"},
+            ]
+        except Exception:
+            # Fail-safe: if services are not available or error occurs, provide safe defaults
+            ctx["kpis"] = [
+                {"label": "Today Appointments", "value": 0, "icon": "📅"},
+                {"label": "On-Call Now", "value": 0, "icon": "🕒"},
+                {"label": "Active Patients", "value": 0, "icon": "🧑‍⚕️"},
+            ]
+
+        # Summaries: fetch via services and adapt via presenters
+        try:
+            appts = dashboard_services.get_upcoming_appointments_for_doctor(self.request.user)
+            ctx["appointments"] = [presenters.appointment_adapter(a) for a in appts]
+        except Exception:
+            ctx["appointments"] = []
+
+        try:
+            shifts = dashboard_services.get_upcoming_shifts_for_doctor(self.request.user)
+            ctx["shifts"] = [presenters.shift_adapter(s) for s in shifts]
+        except Exception:
+            ctx["shifts"] = []
+
+        try:
+            patients = dashboard_services.get_active_patients_for_doctor(self.request.user)
+            ctx["patients"] = [presenters.patient_adapter(p) for p in patients]
+        except Exception:
+            ctx["patients"] = []
+
+        try:
+            reports = dashboard_services.get_recent_reports_for_doctor(self.request.user)
+            ctx["reports"] = [presenters.report_adapter(r) for r in reports]
+        except Exception:
+            ctx["reports"] = []
+
+        return ctx

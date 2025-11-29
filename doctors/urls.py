@@ -11,7 +11,7 @@
 #]
 
 from django.urls import path
-from .views import DoctorProfileView, TimetableView, CancelAppointmentView, PrescriptionView, DoctorListView,DoctorDetailView
+from .views import DoctorProfileView, TimetableView, CancelAppointmentView, PrescriptionView, DoctorListView,DoctorDetailView, DoctorDashboardView
 app_name = "doctors"
 
 urlpatterns = [
@@ -22,4 +22,5 @@ urlpatterns = [
     path("timetable/", TimetableView.as_view(), name="doctor-timetable"),
     path("cancel-appointment/", CancelAppointmentView.as_view(), name="cancel-appointment"),
     path("prescriptions/", PrescriptionView.as_view(), name="doctor-prescriptions"),
+    path("dashboard/", DoctorDashboardView.as_view(), name="dashboard"),
 ]

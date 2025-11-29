@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Backup Management - Admin Panel{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'adminpanel/css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  {% include "adminpanel/includes/admin_sidebar.html" %}
+
+  <div class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>💾 Backup Management</h1>
+        <p class="admin-subtitle">Manage system backups and restore points</p>
+      </div>
+      <div>
+        <button class="btn btn-primary" onclick="initiateBackup('database')">
+          ➕ Create Database Backup
+        </button>
+        <button class="btn btn-secondary" onclick="initiateBackup('full')">
+          📦 Create Full Backup
+        </button>
+      </div>
+    </div>
+
+    {# Stats Cards #}
+    <div class="stats-grid">
+      <div class="stat-card stat-card-success">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ completed_backups }}</h3>
+          <p class="stat-label">Completed</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-warning">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ pending_backups }}</h3>
+          <p class="stat-label">In Progress</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-primary">
+        <div class="stat-icon">🗂️</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ failed_backups }}</h3>
+          <p class="stat-label">Failed</p>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card-info">
+        <div class="stat-icon">💽</div>
+        <div class="stat-content">
+          <h3 class="stat-value">{{ total_size }}</h3>
+          <p class="stat-label">Total Size</p>
+        </div>
+      </div>
+    </div>
+
+    {# Backups Table #}
+    <div class="table-card">
+      <div class="table-header">
+        <h3>Backup History</h3>
+      </div>
+
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>File Size</th>
+              <th>Started</th>
+              <th>Completed</th>
+              <th>Duration</th>
+              <th>Initiated By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for backup in backups %}
+              <tr>
+                <td>#{{ backup.id }}</td>
+                <td><span class="badge badge-info">{{ backup.get_backup_type_display }}</span></td>
+                <td>
+                  {% if backup.status == 'COMPLETED' %}
+                    <span class="badge badge-success">{{ backup.status }}</span>
+                  {% elif backup.status == 'FAILED' %}
+                    <span class="badge badge-danger">{{ backup.status }}</span>
+                  {% else %}
+                    <span class="badge badge-warning">{{ backup.status }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ backup.file_size|filesizeformat|default:"N/A" }}</td>
+                <td>{{ backup.started_at|date:"M d, Y H:i" }}</td>
+                <td>{{ backup.completed_at|date:"M d, Y H:i"|default:"N/A" }}</td>
+                <td>{{ backup.duration|default:"N/A" }}</td>
+                <td>{{ backup.initiated_by.username|default:"System" }}</td>
+                <td>
+                  <div class="action-buttons">
+                    {% if backup.status == 'COMPLETED' %}
+                      <button class="btn-icon" title="Download">📥</button>
+                    {% endif %}
+                    <button class="btn-icon" title="Delete">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="text-center">No backups found</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'adminpanel/js/admin.js' %}"></script>
+{% endblock %}

@@ -30,7 +30,7 @@ urlpatterns = [
 
     # App routes (preserve existing order and names)
     path('doctors/', include('doctors.urls')),
-    # path('accounts/', include('accounts.urls')),  # intentionally commented in original
+     path('accounts/', include('accounts.urls')),  # intentionally commented in original
     path('adminpanel/', include('adminpanel.urls')),
     path('appointments/', include('appointments.urls')),
     path('departments/', include('departments.urls')),

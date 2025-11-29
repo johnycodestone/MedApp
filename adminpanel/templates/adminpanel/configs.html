@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}System Configurations - Admin Panel{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'adminpanel/css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  {% include "adminpanel/includes/admin_sidebar.html" %}
+
+  <div class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>⚙️ System Configurations</h1>
+        <p class="admin-subtitle">Manage system-wide configuration settings</p>
+      </div>
+    </div>
+
+    {# Category Tabs #}
+    <div class="category-tabs">
+      <button class="category-tab {% if not category_filter %}active{% endif %}" data-category="all">All</button>
+      <button class="category-tab {% if category_filter == 'GENERAL' %}active{% endif %}" data-category="GENERAL">General</button>
+      <button class="category-tab {% if category_filter == 'EMAIL' %}active{% endif %}" data-category="EMAIL">Email</button>
+      <button class="category-tab {% if category_filter == 'SECURITY' %}active{% endif %}" data-category="SECURITY">Security</button>
+      <button class="category-tab {% if category_filter == 'NOTIFICATION' %}active{% endif %}" data-category="NOTIFICATION">Notification</button>
+      <button class="category-tab {% if category_filter == 'FEATURE' %}active{% endif %}" data-category="FEATURE">Feature</button>
+    </div>
+
+    {# Config Grid #}
+    <div class="config-grid">
+      {% for config in configurations %}
+        <div class="config-card" data-category="{{ config.category }}">
+          <div class="config-card-header">
+            <div>
+              <h4>{{ config.key }}</h4>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" {% if config.is_active %}checked{% endif %} onchange="toggleConfig({{ config.id }})">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="config-card-body">
+            <p class="config-description">{{ config.description|default:"No description provided" }}</p>
+            <div class="config-value-row">
+              <div class="config-value-display">
+                <strong>Value:</strong> <code>{{ config.value|truncatechars:50 }}</code>
+              </div>
+            </div>
+            <div class="config-meta">
+              <span class="config-meta-item"><strong>Type:</strong> {{ config.data_type }}</span>
+              <span class="config-meta-item"><strong>Category:</strong> <span class="badge badge-info">{{ config.category }}</span></span>
+            </div>
+            <div class="config-actions">
+              <button class="btn btn-primary btn-sm">Edit</button>
+              <button class="btn btn-danger btn-sm">Delete</button>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty-state">
+          <h3>No configurations found</h3>
+          <p>Add your first system configuration to get started.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'adminpanel/js/admin.js' %}"></script>
+{% endblock %}

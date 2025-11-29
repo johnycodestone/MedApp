@@ -1,0 +1,26 @@
+<!--
+  File: doctors/templates/doctors/includes/appointments_summary.html
+  Purpose:
+    - Show upcoming appointments for the doctor using root mini_card and empty_state components.
+  SOLID & Patterns:
+    - SRP: rendering only; data mapping is done in presenters.
+    - Adapter Pattern: presenters provide appointment dicts shaped for mini_card.
+-->
+<section class="panel">
+  <header class="panel-header">
+    <h2 class="panel-title">Upcoming Appointments</h2>
+    <p class="panel-subtitle text-muted">Your next consultations and follow-ups</p>
+  </header>
+
+  <div class="panel-body">
+    {% if appointments %}
+      <div class="mini-grid">
+        {% for appt in appointments %}
+          {% include "components/mini_card.html" with item=appt title=appt.title subtitle=appt.subtitle image_url=appt.image_url badges=appt.badges kpis=appt.kpis href=appt.href url_name=appt.url_name url_arg=appt.url_arg aria_label=appt.aria_label target=appt.target %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "components/empty_state.html" with title="No upcoming appointments" message="You have no scheduled consultations. Use the button below to manage your schedule." icon="📅" action_label="Manage appointments" url_name="appointments:appointment-list" %}
+    {% endif %}
+  </div>
+</section>

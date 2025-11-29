@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Register - MedApp{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'accounts/css/accounts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    {# Logo Section #}
+    <div class="auth-header">
+      <div class="auth-logo">🏥</div>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Join MedApp and start managing your health</p>
+    </div>
+
+    {# Display Django messages #}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" role="alert">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {# Registration Form #}
+    <form method="post" action="{% url 'accounts:register' %}" id="registerForm" class="auth-form">
+      {% csrf_token %}
+
+      {# Name Fields - Side by Side #}
+      <div class="form-row">
+        <div class="form-group">
+          <label for="id_first_name">First Name</label>
+          <input 
+            type="text" 
+            name="first_name" 
+            id="id_first_name"
+            class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+            placeholder="John"
+            value="{{ form.first_name.value|default:'' }}"
+            required
+          >
+          {% if form.first_name.errors %}
+            <div class="form-error">{{ form.first_name.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="id_last_name">Last Name</label>
+          <input 
+            type="text" 
+            name="last_name" 
+            id="id_last_name"
+            class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+            placeholder="Doe"
+            value="{{ form.last_name.value|default:'' }}"
+            required
+          >
+          {% if form.last_name.errors %}
+            <div class="form-error">{{ form.last_name.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Username Field #}
+      <div class="form-group">
+        <label for="id_username">Username</label>
+        <input 
+          type="text" 
+          name="username" 
+          id="id_username"
+          class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+          placeholder="johndoe"
+          value="{{ form.username.value|default:'' }}"
+          required
+        >
+        {% if form.username.errors %}
+          <div class="form-error">{{ form.username.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# Email Field #}
+      <div class="form-group">
+        <label for="id_email">Email Address</label>
+        <input 
+          type="email" 
+          name="email" 
+          id="id_email"
+          class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+          placeholder="john@example.com"
+          value="{{ form.email.value|default:'' }}"
+          required
+        >
+        {% if form.email.errors %}
+          <div class="form-error">{{ form.email.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# Phone Field #}
+      <div class="form-group">
+        <label for="id_phone">Phone Number (Optional)</label>
+        <input 
+          type="tel" 
+          name="phone" 
+          id="id_phone"
+          class="form-control {% if form.phone.errors %}is-invalid{% endif %}"
+          placeholder="+1234567890"
+          value="{{ form.phone.value|default:'' }}"
+        >
+        {% if form.phone.errors %}
+          <div class="form-error">{{ form.phone.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# Role Selection #}
+      <div class="form-group">
+        <label for="id_role">I am a</label>
+        <select 
+          name="role" 
+          id="id_role"
+          class="form-control {% if form.role.errors %}is-invalid{% endif %}"
+          required
+        >
+          <option value="">Select your role...</option>
+          <option value="PATIENT" {% if form.role.value == 'PATIENT' %}selected{% endif %}>Patient</option>
+          <option value="DOCTOR" {% if form.role.value == 'DOCTOR' %}selected{% endif %}>Doctor</option>
+          <option value="HOSPITAL" {% if form.role.value == 'HOSPITAL' %}selected{% endif %}>Hospital</option>
+        </select>
+        {% if form.role.errors %}
+          <div class="form-error">{{ form.role.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# Password Fields #}
+      <div class="form-group">
+        <label for="id_password1">Password</label>
+        <div class="password-field">
+          <input 
+            type="password" 
+            name="password1" 
+            id="id_password1"
+            class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+            placeholder="Create a strong password"
+            required
+          >
+          <button type="button" class="password-toggle" data-target="id_password1" aria-label="Toggle password visibility">
+            <span class="password-icon">👁️</span>
+          </button>
+        </div>
+        {% if form.password1.errors %}
+          <div class="form-error">{{ form.password1.errors.0 }}</div>
+        {% endif %}
+        <small class="form-help">At least 8 characters with letters and numbers</small>
+      </div>
+
+      <div class="form-group">
+        <label for="id_password2">Confirm Password</label>
+        <div class="password-field">
+          <input 
+            type="password" 
+            name="password2" 
+            id="id_password2"
+            class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+            placeholder="Re-enter your password"
+            required
+          >
+          <button type="button" class="password-toggle" data-target="id_password2" aria-label="Toggle password visibility">
+            <span class="password-icon">👁️</span>
+          </button>
+        </div>
+        {% if form.password2.errors %}
+          <div class="form-error">{{ form.password2.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# Terms & Conditions #}
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" name="terms" required>
+          <span>I agree to the <a href="/terms/" target="_blank">Terms & Conditions</a> and <a href="/privacy/" target="_blank">Privacy Policy</a></span>
+        </label>
+      </div>
+
+      {# Non-field errors #}
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">
+          {{ form.non_field_errors.0 }}
+        </div>
+      {% endif %}
+
+      {# Submit Button #}
+      <button type="submit" class="btn btn-primary btn-block auth-submit">
+        Create Account
+      </button>
+    </form>
+
+    {# Login Link #}
+    <div class="auth-footer">
+      <p>Already have an account? <a href="{% url 'accounts:login' %}" class="auth-link-primary">Sign in</a></p>
+    </div>
+  </div>
+
+  {# Benefits Section #}
+  <div class="auth-features">
+    <h3>Join Thousands of Users</h3>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">10,000+</div>
+        <div class="stat-label">Active Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">500+</div>
+        <div class="stat-label">Doctors</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">50+</div>
+        <div class="stat-label">Hospitals</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'accounts/js/accounts.js' %}"></script>
+{% endblock %}

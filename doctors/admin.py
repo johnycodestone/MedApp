@@ -8,7 +8,7 @@ from .forms import DoctorProfileForm
 
 
 # -------------------------------
-# Admin registration for DoctorProfile
+# Admin registration for DoctorProfilee
 # -------------------------------
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):

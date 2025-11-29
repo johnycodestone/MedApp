@@ -1,0 +1,25 @@
+<!--
+  File: doctors/templates/doctors/includes/reports_summary.html
+  Purpose:
+    - Links to doctor-specific reports and analytics.
+  SOLID & Patterns:
+    - SRP: rendering only.
+-->
+<section class="panel">
+  <header class="panel-header">
+    <h2 class="panel-title">Reports & Analytics</h2>
+    <p class="panel-subtitle text-muted">Clinical metrics and performance insights</p>
+  </header>
+
+  <div class="panel-body">
+    {% if reports %}
+      <div class="mini-grid">
+        {% for r in reports %}
+          {% include "components/mini_card.html" with item=r title=r.title subtitle=r.subtitle image_url=r.image_url badges=r.badges kpis=r.kpis href=r.href url_name=r.url_name url_arg=r.url_arg aria_label=r.aria_label target=r.target %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "components/empty_state.html" with title="No reports available" message="Generate or request reports to view analytics." icon="📊" action_label="View reports" url_name="reports:dashboard" %}
+    {% endif %}
+  </div>
+</section>

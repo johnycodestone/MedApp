@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login - MedApp{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'accounts/css/accounts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+    {# Logo Section #}
+    <div class="auth-header">
+      <div class="auth-logo">🏥</div>
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-subtitle">Sign in to access your MedApp account</p>
+    </div>
+
+    {# Display Django messages #}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" role="alert">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {# Login Form #}
+    <form method="post" action="{% url 'accounts:login' %}" id="loginForm" class="auth-form">
+      {% csrf_token %}
+
+      {# Username or Email Field #}
+      <div class="form-group">
+        <label for="id_username">Username or Email</label>
+        <input 
+          type="text" 
+          name="username" 
+          id="id_username"
+          class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+          placeholder="Enter your username or email"
+          value="{{ form.username.value|default:'' }}"
+          required
+          autofocus
+        >
+        {% if form.username.errors %}
+          <div class="form-error">{{ form.username.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# Password Field #}
+      <div class="form-group">
+        <label for="id_password">Password</label>
+        <div class="password-field">
+          <input 
+            type="password" 
+            name="password" 
+            id="id_password"
+            class="form-control {% if form.password.errors %}is-invalid{% endif %}"
+            placeholder="Enter your password"
+            required
+          >
+          <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+            <span class="password-icon">👁️</span>
+          </button>
+        </div>
+        {% if form.password.errors %}
+          <div class="form-error">{{ form.password.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      {# Remember Me & Forgot Password #}
+      <div class="auth-options">
+        <label class="checkbox-label">
+          <input type="checkbox" name="remember_me">
+          <span>Remember me</span>
+        </label>
+        <a href="{% url 'accounts:password_reset' %}" class="auth-link">Forgot password?</a>
+      </div>
+
+      {# Non-field errors #}
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">
+          {{ form.non_field_errors.0 }}
+        </div>
+      {% endif %}
+
+      {# Submit Button #}
+      <button type="submit" class="btn btn-primary btn-block auth-submit">
+        Sign In
+      </button>
+    </form>
+
+    {# Sign Up Link #}
+    <div class="auth-footer">
+      <p>Don't have an account? <a href="{% url 'accounts:register' %}" class="auth-link-primary">Sign up</a></p>
+    </div>
+  </div>
+
+  {# Features Section #}
+  <div class="auth-features">
+    <h3>Why MedApp?</h3>
+    <div class="feature-list">
+      <div class="feature-item">
+        <span class="feature-icon">📅</span>
+        <div class="feature-content">
+          <h4>Easy Appointment Booking</h4>
+          <p>Schedule appointments with top doctors in seconds</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">💊</span>
+        <div class="feature-content">
+          <h4>Digital Prescriptions</h4>
+          <p>Access your prescriptions anytime, anywhere</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📊</span>
+        <div class="feature-content">
+          <h4>Health Records</h4>
+          <p>Keep all your medical records in one place</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'accounts/js/accounts.js' %}"></script>
+{% endblock %}

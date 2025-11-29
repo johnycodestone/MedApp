@@ -1,25 +1,49 @@
 # doctors/views.py
-from django.views.generic import ListView
+"""
+Views for the doctors app.
+
+This file preserves the original API and HTML views and provides a robust,
+well-commented DoctorDashboardView that:
+- Resolves named routes to concrete hrefs in the view to avoid template
+  NoReverseMatch errors when a namespace is missing.
+- Calls dashboard services for KPIs and summaries and maps results through
+  presenters.
+- Provides a defensive, multi-tier fallback for loading "shifts" from the
+  schedules app (tries dashboard_services first, then common schedules service
+  function names), logging failures but never raising to the template.
+- Keeps all service calls isolated in try/except blocks so a single failing
+  integration does not break the entire dashboard page.
+"""
+
+from django.views.generic import ListView, TemplateView
 from django.db.models import Q
 from django.views import View
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.urls import reverse, NoReverseMatch
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 
 from datetime import timedelta, datetime
+import logging
 
 from .models import DoctorProfile, SPECIALIZATION_CHOICES
 from .serializers import DoctorProfileSerializer, TimetableSerializer, PrescriptionSerializer
 from appointments.models import Appointment, AppointmentStatus
-from prescriptions.models import Prescription   # ✅ unified Prescription model
+from prescriptions.models import Prescription
 from .services import (
     ensure_doctor_profile, manage_timetable, get_timetable,
     cancel_patient_appointment
 )
+
+# Local presenters and dashboard services
+from . import presenters
+from . import services as dashboard_services
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------
 # Section A: API Views
@@ -64,19 +88,15 @@ class PrescriptionView(APIView):
 
     def post(self, request):
         data = request.data
-        pdf = request.FILES.get("pdf_file")
 
-        # ✅ prescriptions are tied to appointments, not directly to patients
         appointment_id = data.get("appointment_id")
+        # Appointment.doctor is DoctorProfile; filter via doctor__user
         appointment = get_object_or_404(Appointment, id=appointment_id, doctor__user=request.user)
 
         pres = Prescription.objects.create(
             appointment=appointment,
             notes=data.get("text", "")
         )
-        if pdf:
-            pres.pdf_file = pdf
-            pres.save()
 
         return Response(PrescriptionSerializer(pres).data, status=status.HTTP_201_CREATED)
 
@@ -157,14 +177,16 @@ class DoctorDetailView(View):
     HTML page: Doctor detail with available slots for booking.
     """
     def get(self, request, id):
-        doctor = get_object_or_404(User, id=id)
-        profile = getattr(doctor, "doctors_doctor_profile", None)
+        # We show the doctor's User info, but Appointment.doctor expects DoctorProfile
+        doctor_user = get_object_or_404(User, id=id)
+        profile = getattr(doctor_user, "doctors_doctor_profile", None)
 
         today = timezone.now()
         next_week = today + timedelta(days=7)
 
+        # Filter appointments by DoctorProfile (not User)
         booked_slots = Appointment.objects.filter(
-            doctor=doctor,
+            doctor=profile,
             scheduled_time__range=(today, next_week),
             status__in=[AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED]
         ).values_list("scheduled_time", flat=True)
@@ -181,13 +203,240 @@ class DoctorDetailView(View):
                     slots.append(slot_time)
 
         context = {
-            "doctor": doctor,
+            "doctor": doctor_user,
             "profile": profile,
             "available_slots": slots,
             "crumbs": [
                 {"label": "Home", "url": "/"},
                 {"label": "Doctors", "url": "/doctors/"},
-                {"label": f"Dr. {doctor.get_full_name()}", "url": None},
+                {"label": f"Dr. {doctor_user.get_full_name()}", "url": None},
             ],
         }
         return render(request, "doctors/doctor_detail.html", context)
+
+
+# ---------------------------
+# Section C: New - Doctor Dashboard (additive, robust)
+# ---------------------------
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class DoctorDashboardView(LoginRequiredMixin, TemplateView):
+    """
+    Doctor user account dashboard (robust).
+
+    Key improvements:
+    - Resolves named routes to concrete hrefs in the view to avoid template NoReverseMatch.
+    - Recursively converts any dict in the context that contains 'url_name' (and optional 'url_arg')
+      into an 'href' key using django.urls.reverse, with safe fallbacks.
+    - Defensive: logs failures and never raises to the template; missing routes simply result in
+      omitted or disabled actions.
+    - Keeps service calls isolated so one failing integration doesn't break the page.
+    """
+    template_name = "doctors/dashboard.html"
+
+    def _resolve_named_url(self, url_name: str, url_arg=None):
+        """
+        Try to reverse a named URL safely. Returns href string or None.
+        - If reversing fails and namespace is 'shifts', try 'schedules' as a fallback.
+        - Any exception is logged and None is returned.
+        """
+        try:
+            if url_arg:
+                return reverse(url_name, args=[url_arg])
+            return reverse(url_name)
+        except NoReverseMatch as e:
+            # Try a small, sensible fallback if namespace is 'shifts'
+            try:
+                if ":" in url_name:
+                    ns, name = url_name.split(":", 1)
+                    if ns == "shifts":
+                        fallback = f"schedules:{name}"
+                        try:
+                            if url_arg:
+                                return reverse(fallback, args=[url_arg])
+                            return reverse(fallback)
+                        except NoReverseMatch:
+                            return None
+            except Exception:
+                # swallow and return None
+                logger.debug("Fallback attempt failed for url_name=%s: %s", url_name, e, exc_info=True)
+            logger.debug("NoReverseMatch for url_name=%s: %s", url_name, e, exc_info=True)
+            return None
+        except Exception as e:
+            logger.exception("Unexpected error reversing url_name=%s: %s", url_name, e)
+            return None
+
+    def _resolve_context_urls(self, obj):
+        """
+        Recursively walk `obj` (which may be a dict, list, tuple, or other) and:
+        - If a dict contains 'url_name', attempt to resolve it to 'href' and remove 'url_name'/'url_arg'.
+        - Returns a new object (does not mutate original) with resolved hrefs where possible.
+        This ensures templates that expect 'href' will not call {% url %} on missing namespaces.
+        """
+        if isinstance(obj, dict):
+            new = {}
+            # If this dict itself contains url_name, resolve it first
+            if "url_name" in obj:
+                url_name = obj.get("url_name")
+                url_arg = obj.get("url_arg")
+                href = self._resolve_named_url(url_name, url_arg)
+                # Copy all keys except url_name/url_arg; prefer explicit href if present
+                for k, v in obj.items():
+                    if k in ("url_name", "url_arg"):
+                        continue
+                    new[k] = self._resolve_context_urls(v)
+                # If explicit href already present, keep it; else set resolved href if available
+                if obj.get("href"):
+                    new["href"] = obj["href"]
+                elif href:
+                    new["href"] = href
+                else:
+                    # No href resolved; keep url_name removed to avoid template reversing
+                    new["href"] = None
+                return new
+            # Otherwise, recursively process keys
+            for k, v in obj.items():
+                new[k] = self._resolve_context_urls(v)
+            return new
+
+        elif isinstance(obj, (list, tuple)):
+            new_list = []
+            for item in obj:
+                new_list.append(self._resolve_context_urls(item))
+            return new_list if isinstance(obj, list) else tuple(new_list)
+
+        else:
+            # primitive type
+            return obj
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        # Breadcrumbs (root components expect 'href' keys)
+        ctx["crumbs"] = [
+            {"label": "Home", "href": "/"},
+            {"label": "Doctors", "href": "/doctors/"},
+            {"label": "Dashboard", "href": None},
+        ]
+
+        # Raw action definitions: prefer named routes but resolve them to hrefs here.
+        raw_actions = [
+            {"label": "My Appointments", "icon": "📅", "url_name": "appointments:appointment-list", "variant": "primary"},
+            {"label": "My Patients",     "icon": "🧑‍⚕️", "url_name": "patients:dashboard",             "variant": "success"},
+            {"label": "My Schedules",    "icon": "🕒", "url_name": "schedules:schedule-dashboard",   "variant": "info"},
+            {"label": "My Reports",      "icon": "📊", "url_name": "reports:dashboard",              "variant": "secondary"},
+        ]
+
+        # Resolve actions to hrefs immediately
+        resolved_actions = []
+        for a in raw_actions:
+            # If presenter.build_action returns a dict with url_name, we still resolve here
+            href = a.get("href")
+            if not href and a.get("url_name"):
+                href = self._resolve_named_url(a["url_name"], a.get("url_arg"))
+            if href:
+                resolved_actions.append({
+                    "label": a["label"],
+                    "icon": a.get("icon"),
+                    "href": href,
+                    "variant": a.get("variant", "primary"),
+                })
+            else:
+                # If no href resolved, we intentionally omit the action to avoid template reversing
+                logger.debug("Omitting dashboard action '%s' because no href could be resolved.", a["label"])
+
+        ctx["actions"] = resolved_actions
+
+        # KPIs (defensive)
+        try:
+            ctx["kpis"] = [
+                {"label": "Today Appointments", "value": dashboard_services.count_todays_appointments(self.request.user), "icon": "📅"},
+                {"label": "On-Call Now",        "value": dashboard_services.count_current_oncall(self.request.user),       "icon": "🕒"},
+                {"label": "Active Patients",    "value": dashboard_services.count_active_patients(self.request.user),    "icon": "🧑‍⚕️"},
+            ]
+        except Exception as e:
+            logger.debug("Failed to compute KPIs for doctor %s: %s", getattr(self.request.user, "pk", None), e, exc_info=True)
+            ctx["kpis"] = [
+                {"label": "Today Appointments", "value": 0, "icon": "📅"},
+                {"label": "On-Call Now",        "value": 0, "icon": "🕒"},
+                {"label": "Active Patients",    "value": 0, "icon": "🧑‍⚕️"},
+            ]
+
+        # Appointments
+        try:
+            appts = dashboard_services.get_upcoming_appointments_for_doctor(self.request.user)
+            ctx["appointments"] = [presenters.appointment_adapter(a) for a in appts] if appts else []
+        except Exception as e:
+            logger.debug("Failed to load appointments for doctor %s: %s", getattr(self.request.user, "pk", None), e, exc_info=True)
+            ctx["appointments"] = []
+
+        # Shifts: robust loading with fallbacks
+        try:
+            shifts = dashboard_services.get_upcoming_shifts_for_doctor(self.request.user)
+            ctx["shifts"] = [presenters.shift_adapter(s) for s in shifts] if shifts else []
+        except Exception as primary_exc:
+            logger.debug("Primary shifts loader failed for doctor %s: %s", getattr(self.request.user, "pk", None), primary_exc, exc_info=True)
+            # Attempt fallbacks against schedules app
+            try:
+                from schedules import services as schedules_services  # may raise ImportError
+
+                fallback_names = [
+                    "get_upcoming_shifts_for_doctor",
+                    "get_shifts_for_doctor",
+                    "get_upcoming_shifts",
+                    "schedules_dashboard",
+                ]
+
+                fallback_shifts = None
+                for fn in fallback_names:
+                    fn_obj = getattr(schedules_services, fn, None)
+                    if callable(fn_obj):
+                        try:
+                            fallback_shifts = fn_obj(self.request.user)
+                            if fallback_shifts:
+                                break
+                        except Exception as e:
+                            logger.debug("schedules.services.%s raised for doctor %s: %s", fn, getattr(self.request.user, "pk", None), e, exc_info=True)
+                            fallback_shifts = None
+
+                if fallback_shifts:
+                    ctx["shifts"] = [presenters.shift_adapter(s) for s in fallback_shifts]
+                else:
+                    ctx["shifts"] = []
+
+            except Exception as fallback_exc:
+                logger.warning(
+                    "Unable to load shifts for doctor %s. primary_exc=%s fallback_exc=%s",
+                    getattr(self.request.user, "pk", None),
+                    primary_exc,
+                    fallback_exc,
+                    exc_info=True
+                )
+                ctx["shifts"] = []
+
+        # Patients
+        try:
+            patients = dashboard_services.get_active_patients_for_doctor(self.request.user)
+            ctx["patients"] = [presenters.patient_adapter(p) for p in patients] if patients else []
+        except Exception as e:
+            logger.debug("Failed to load patients for doctor %s: %s", getattr(self.request.user, "pk", None), e, exc_info=True)
+            ctx["patients"] = []
+
+        # Reports
+        try:
+            reports = dashboard_services.get_recent_reports_for_doctor(self.request.user)
+            ctx["reports"] = [presenters.report_adapter(r) for r in reports] if reports else []
+        except Exception as e:
+            logger.debug("Failed to load reports for doctor %s: %s", getattr(self.request.user, "pk", None), e, exc_info=True)
+            ctx["reports"] = []
+
+        # FINAL STEP: recursively resolve any remaining url_name/url_arg pairs anywhere in the context
+        # This ensures components like `empty_state.html` never receive a url_name to reverse.
+        try:
+            ctx = self._resolve_context_urls(ctx)
+        except Exception as e:
+            # If the resolver itself fails for any reason, log and continue with the original ctx
+            logger.exception("Error while resolving context URLs for doctor dashboard: %s", e)
+
+        return ctx

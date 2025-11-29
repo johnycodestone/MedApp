@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load static %}
+
+<!--
+  File: doctors/templates/doctors/dashboard.html
+  Purpose:
+    - Main doctors user account dashboard page.
+    - Composes root-level components (KPIs, quick actions, mini-cards) via single-line includes.
+  SOLID & Patterns:
+    - SRP: This template only composes UI; it does not fetch or transform data.
+    - OCP: New UI variants should be added by passing different context or adding includes, not editing root components.
+    - Template Pattern: View provides context; template renders.
+-->
+
+{% block title %}Doctor Dashboard – MedApp{% endblock %}
+
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'css/doctors_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+  <main id="main-content" class="container my-4">
+    <!-- Breadcrumbs (if you have a shared breadcrumbs include) -->
+    {% if crumbs %}
+      {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+    {% endif %}
+
+    <!-- KPI row (root component) -->
+    <section class="mb-4" aria-label="Key performance indicators">
+      {% include "components/kpi_stats_block.html" with kpis=kpis layout='row' %}
+    </section>
+
+    <!-- Quick actions (app wrapper passes actions to root quick_actions) -->
+    <section class="mb-4" aria-label="Quick actions">
+      {% include "doctors/includes/quick_actions.html" with actions=actions %}
+    </section>
+
+    <!-- Summaries grid -->
+    <section aria-label="Recent activity">
+      <div class="row g-4">
+        <div class="col-12 col-lg-6">
+          {% include "doctors/includes/appointments_summary.html" with appointments=appointments %}
+        </div>
+        <div class="col-12 col-lg-6">
+          {% include "doctors/includes/shifts_summary.html" with shifts=shifts %}
+        </div>
+        <div class="col-12 col-lg-6">
+          {% include "doctors/includes/patients_summary.html" with patients=patients %}
+        </div>
+        <div class="col-12 col-lg-6">
+          {% include "doctors/includes/reports_summary.html" with reports=reports %}
+        </div>
+      </div>
+    </section>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/doctors_dashboard.js' %}" defer></script>
+{% endblock %}

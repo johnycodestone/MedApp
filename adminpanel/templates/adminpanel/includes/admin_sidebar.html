@@ -1,0 +1,129 @@
+{# adminpanel/templates/adminpanel/includes/admin_sidebar.html #}
+{% load static %}
+
+<aside class="admin-sidebar" id="adminSidebar">
+  {# Sidebar Header #}
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <span class="logo-icon">🎛️</span>
+      <span class="logo-text">Admin Panel</span>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle">
+      <span>☰</span>
+    </button>
+  </div>
+
+  {# Sidebar Navigation #}
+  <nav class="sidebar-nav">
+    <a href="{% url 'adminpanel:admin-dashboard' %}" class="sidebar-item {% if request.resolver_match.url_name == 'admin-dashboard' %}active{% endif %}">
+      <span class="sidebar-icon">📊</span>
+      <span class="sidebar-text">Dashboard</span>
+    </a>
+
+    {# User Management Section #}
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">USER MANAGEMENT</div>
+      
+      <a href="{% url 'adminpanel:users-list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'users-list' %}active{% endif %}">
+        <span class="sidebar-icon">👥</span>
+        <span class="sidebar-text">All Users</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:doctors-list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'doctors-list' %}active{% endif %}">
+        <span class="sidebar-icon">👨‍⚕️</span>
+        <span class="sidebar-text">Doctors</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:hospitals-list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'hospitals-list' %}active{% endif %}">
+        <span class="sidebar-icon">🏥</span>
+        <span class="sidebar-text">Hospitals</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:patients-list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'patients-list' %}active{% endif %}">
+        <span class="sidebar-icon">🤒</span>
+        <span class="sidebar-text">Patients</span>
+      </a>
+    </div>
+
+    {# System Section #}
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">SYSTEM</div>
+      
+      <a href="{% url 'adminpanel:configs' %}" class="sidebar-item {% if request.resolver_match.url_name == 'configs' %}active{% endif %}">
+        <span class="sidebar-icon">⚙️</span>
+        <span class="sidebar-text">Configurations</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:backups' %}" class="sidebar-item {% if request.resolver_match.url_name == 'backups' %}active{% endif %}">
+        <span class="sidebar-icon">💾</span>
+        <span class="sidebar-text">Backups</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:logs' %}" class="sidebar-item {% if request.resolver_match.url_name == 'logs' %}active{% endif %}">
+        <span class="sidebar-icon">📋</span>
+        <span class="sidebar-text">System Logs</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:audit' %}" class="sidebar-item {% if request.resolver_match.url_name == 'audit' %}active{% endif %}">
+        <span class="sidebar-icon">📊</span>
+        <span class="sidebar-text">Audit Trail</span>
+      </a>
+    </div>
+
+    {# Content Section #}
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">CONTENT</div>
+      
+      <a href="{% url 'adminpanel:prescriptions-list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'prescriptions-list' %}active{% endif %}">
+        <span class="sidebar-icon">💊</span>
+        <span class="sidebar-text">Prescriptions</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:appointments-list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'appointments-list' %}active{% endif %}">
+        <span class="sidebar-icon">📅</span>
+        <span class="sidebar-text">Appointments</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:departments-list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'departments-list' %}active{% endif %}">
+        <span class="sidebar-icon">🏢</span>
+        <span class="sidebar-text">Departments</span>
+      </a>
+    </div>
+
+    {# Settings Section #}
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">SETTINGS</div>
+      
+      <a href="{% url 'adminpanel:email-settings' %}" class="sidebar-item {% if request.resolver_match.url_name == 'email-settings' %}active{% endif %}">
+        <span class="sidebar-icon">📧</span>
+        <span class="sidebar-text">Email Settings</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:notifications' %}" class="sidebar-item {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+        <span class="sidebar-icon">🔔</span>
+        <span class="sidebar-text">Notifications</span>
+      </a>
+      
+      <a href="{% url 'adminpanel:security' %}" class="sidebar-item {% if request.resolver_match.url_name == 'security' %}active{% endif %}">
+        <span class="sidebar-icon">🔐</span>
+        <span class="sidebar-text">Security</span>
+      </a>
+      
+      <a href="{% url 'accounts:logout' %}" class="sidebar-item">
+        <span class="sidebar-icon">🚪</span>
+        <span class="sidebar-text">Logout</span>
+      </a>
+    </div>
+  </nav>
+
+  {# Sidebar Footer #}
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ user.first_name|first|upper|default:"A" }}{{ user.last_name|first|upper|default:"D" }}</div>
+      <div class="user-details">
+        <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+        <div class="user-role">{{ user.get_role_display|default:"Admin" }}</div>
+      </div>
+    </div>
+  </div>
+</aside>

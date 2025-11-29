@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Prescription #{{ prescription.id }} - MedApp{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'prescriptions/css/prescriptions.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container prescription-detail-container">
+  {# Breadcrumbs #}
+  {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+
+  {# Display Django messages #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="prescription-detail-card">
+    {# Header #}
+    <div class="prescription-detail-header">
+      <div class="detail-header-left">
+        <div class="prescription-icon-large">💊</div>
+        <div class="prescription-header-info">
+          <h1>Prescription #{{ prescription.id }}</h1>
+          <p class="prescription-date-large">
+            Issued on {{ prescription.created_at|date:"F d, Y \a\t g:i A" }}
+          </p>
+        </div>
+      </div>
+      <div class="detail-header-actions">
+        <button class="btn btn-outline-primary" onclick="window.print()">
+          <span>🖨️</span> Print
+        </button>
+        <button class="btn btn-primary" onclick="downloadPrescription({{ prescription.id }})">
+          <span>⬇️</span> Download PDF
+        </button>
+      </div>
+    </div>
+
+    {# Parties Section #}
+    <div class="prescription-parties-section">
+      {# Doctor Information #}
+      <div class="party-card">
+        <label>Prescribed By</label>
+        <div class="party-details">
+          <div class="party-avatar">👨‍⚕️</div>
+          <div class="party-info-detailed">
+            <h3>Dr. {{ prescription.doctor.user.get_full_name }}</h3>
+            <p class="party-specialty">{{ prescription.doctor.specialization }}</p>
+            <p class="party-contact">License: {{ prescription.doctor.license_number }}</p>
+          </div>
+        </div>
+      </div>
+
+      {# Patient Information #}
+      <div class="party-card">
+        <label>Patient</label>
+        <div class="party-details">
+          <div class="party-avatar">👤</div>
+          <div class="party-info-detailed">
+            <h3>{{ prescription.patient.user.get_full_name }}</h3>
+            <p class="party-contact">{{ prescription.patient.user.email }}</p>
+            {% if prescription.patient.date_of_birth %}
+              <p class="party-dob">DOB: {{ prescription.patient.date_of_birth|date:"F d, Y" }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Medications Section #}
+    <div class="medications-detail-section">
+      <h2 class="section-heading">💊 Prescribed Medications</h2>
+      
+      {% if prescription.medications.all %}
+        <div class="medications-detail-list">
+          {% for medication in prescription.medications.all %}
+            <div class="medication-detail-card">
+              <div class="medication-detail-header">
+                <div class="medication-number">{{ forloop.counter }}</div>
+                <h3 class="medication-name-large">{{ medication.name }}</h3>
+              </div>
+              
+              <div class="medication-detail-grid">
+                <div class="medication-detail-item">
+                  <label>Dosage</label>
+                  <div class="detail-value">{{ medication.dosage }}</div>
+                </div>
+
+                <div class="medication-detail-item">
+                  <label>Frequency</label>
+                  <div class="detail-value">{{ medication.frequency }}</div>
+                </div>
+
+                <div class="medication-detail-item">
+                  <label>Duration</label>
+                  <div class="detail-value">{{ medication.duration }}</div>
+                </div>
+              </div>
+
+              {# Medication Instructions #}
+              <div class="medication-instructions">
+                <label>How to take</label>
+                <p>Take {{ medication.dosage }} {{ medication.frequency|lower }} for {{ medication.duration|lower }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-medications">
+          <p class="text-muted">No medications listed in this prescription</p>
+        </div>
+      {% endif %}
+    </div>
+
+    {# Additional Notes Section #}
+    {% if prescription.notes %}
+      <div class="notes-detail-section">
+        <h2 class="section-heading">📝 Additional Notes</h2>
+        <div class="notes-content">
+          <p>{{ prescription.notes }}</p>
+        </div>
+      </div>
+    {% endif %}
+
+    {# Important Information #}
+    <div class="prescription-disclaimer">
+      <h4>⚠️ Important Information</h4>
+      <ul>
+        <li>Take medications exactly as prescribed</li>
+        <li>Complete the full course of treatment unless instructed otherwise</li>
+        <li>Do not share your medication with others</li>
+        <li>Contact your doctor if you experience side effects</li>
+        <li>Store medications as directed on the packaging</li>
+      </ul>
+    </div>
+
+    {# Action Buttons #}
+    <div class="prescription-detail-actions">
+      <a href="{% url 'prescriptions:list' %}" class="btn btn-secondary">
+        <span>←</span> Back to Prescriptions
+      </a>
+      {% if user.is_patient %}
+        <a href="{% url 'appointments:appointment-list' %}" class="btn btn-outline-primary">
+          <span>📅</span> Book Follow-up
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'prescriptions/js/prescriptions.js' %}"></script>
+{% endblock %}

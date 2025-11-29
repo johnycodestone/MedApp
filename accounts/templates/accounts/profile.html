@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Profile - MedApp{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'accounts/css/accounts.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container profile-container">
+  {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+
+  {# Display Django messages #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="profile-layout">
+    {# Profile Header #}
+    <div class="profile-header-card">
+      <div class="profile-avatar-section">
+        <div class="profile-avatar">
+          {% if user.first_name and user.last_name %}
+            {{ user.first_name|first }}{{ user.last_name|first }}
+          {% else %}
+            {{ user.username|first|upper }}
+          {% endif %}
+        </div>
+        <div class="profile-header-info">
+          <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
+          <p class="profile-role">
+            <span class="badge badge-primary">{{ user.get_role_display }}</span>
+            {% if user.is_verified %}
+              <span class="verified-badge">✓ Verified</span>
+            {% else %}
+              <span class="badge badge-warning">Pending Verification</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+          <span>✏️</span> Edit Profile
+        </a>
+        <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-primary">
+          <span>🔒</span> Change Password
+        </a>
+      </div>
+    </div>
+
+    {# Profile Content #}
+    <div class="profile-content">
+      {# Personal Information Card #}
+      <div class="card profile-card">
+        <div class="card-header">
+          <h3>Personal Information</h3>
+        </div>
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-item">
+              <label class="info-label">Username</label>
+              <div class="info-value">{{ user.username }}</div>
+            </div>
+
+            <div class="info-item">
+              <label class="info-label">Email Address</label>
+              <div class="info-value">
+                {{ user.email }}
+                {% if not user.is_verified %}
+                  <span class="text-muted text-sm">(Not verified)</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="info-item">
+              <label class="info-label">First Name</label>
+              <div class="info-value">{{ user.first_name|default:"—" }}</div>
+            </div>
+
+            <div class="info-item">
+              <label class="info-label">Last Name</label>
+              <div class="info-value">{{ user.last_name|default:"—" }}</div>
+            </div>
+
+            <div class="info-item">
+              <label class="info-label">Phone Number</label>
+              <div class="info-value">{{ user.phone|default:"—" }}</div>
+            </div>
+
+            <div class="info-item">
+              <label class="info-label">Role</label>
+              <div class="info-value">{{ user.get_role_display }}</div>
+            </div>
+
+            <div class="info-item">
+              <label class="info-label">Account Created</label>
+              <div class="info-value">{{ user.created_at|date:"F d, Y" }}</div>
+            </div>
+
+            <div class="info-item">
+              <label class="info-label">Last Updated</label>
+              <div class="info-value">{{ user.updated_at|date:"F d, Y" }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Account Status Card #}
+      <div class="card profile-card">
+        <div class="card-header">
+          <h3>Account Status</h3>
+        </div>
+        <div class="card-body">
+          <div class="status-grid">
+            <div class="status-item">
+              <div class="status-icon {% if user.is_active %}status-success{% else %}status-error{% endif %}">
+                {% if user.is_active %}✓{% else %}✕{% endif %}
+              </div>
+              <div class="status-info">
+                <div class="status-label">Account Active</div>
+                <div class="status-text">
+                  {% if user.is_active %}
+                    Your account is active and accessible
+                  {% else %}
+                    Your account is currently deactivated
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div class="status-item">
+              <div class="status-icon {% if user.is_verified %}status-success{% else %}status-warning{% endif %}">
+                {% if user.is_verified %}✓{% else %}⚠{% endif %}
+              </div>
+              <div class="status-info">
+                <div class="status-label">Email Verified</div>
+                <div class="status-text">
+                  {% if user.is_verified %}
+                    Your email has been verified
+                  {% else %}
+                    Please verify your email address
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Recent Activity Card #}
+      <div class="card profile-card">
+        <div class="card-header">
+          <h3>Recent Activity</h3>
+        </div>
+        <div class="card-body">
+          {% if activities %}
+            <div class="activity-list">
+              {% for activity in activities %}
+                <div class="activity-item">
+                  <div class="activity-icon">
+                    {% if activity.action == 'LOGIN' %}🔐
+                    {% elif activity.action == 'LOGOUT' %}🚪
+                    {% elif activity.action == 'PROFILE_UPDATE' %}✏️
+                    {% elif activity.action == 'PASSWORD_CHANGE' %}🔒
+                    {% else %}📝
+                    {% endif %}
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-title">{{ activity.get_action_display }}</div>
+                    <div class="activity-meta">
+                      {{ activity.created_at|date:"F d, Y \a\t g:i A" }}
+                      {% if activity.ip_address %}
+                        · IP: {{ activity.ip_address }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted text-center">No recent activity</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'accounts/js/accounts.js' %}"></script>
+{% endblock %}

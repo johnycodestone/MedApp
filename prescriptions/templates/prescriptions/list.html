@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Prescriptions - MedApp{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'prescriptions/css/prescriptions.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container prescriptions-container">
+  {# Breadcrumbs #}
+  {% include "includes/breadcrumbs.html" with crumbs=crumbs %}
+
+  {# Page Header #}
+  <div class="prescriptions-header">
+    <div class="header-content">
+      <h1>💊 My Prescriptions</h1>
+      <p class="header-subtitle">View and manage your prescriptions</p>
+    </div>
+    {% if user.is_doctor %}
+      <a href="{% url 'prescriptions:create' %}" class="btn btn-primary">
+        <span>➕</span> Create Prescription
+      </a>
+    {% endif %}
+  </div>
+
+  {# Display Django messages #}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {# Filters Section #}
+  <div class="prescriptions-filters">
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">
+        All Prescriptions
+      </button>
+      <button class="filter-tab" data-filter="recent">
+        Recent (Last 30 days)
+      </button>
+      <button class="filter-tab" data-filter="active">
+        Active
+      </button>
+    </div>
+
+    <div class="filter-search">
+      <input 
+        type="text" 
+        id="searchInput" 
+        placeholder="Search prescriptions..." 
+        class="form-control"
+      >
+    </div>
+  </div>
+
+  {# Prescriptions Grid #}
+  <div class="prescriptions-grid" id="prescriptionsGrid">
+    {% if prescriptions %}
+      {% for prescription in prescriptions %}
+        <div class="prescription-card" data-id="{{ prescription.id }}">
+          {# Card Header #}
+          <div class="prescription-card-header">
+            <div class="prescription-meta">
+              <span class="prescription-icon">💊</span>
+              <div class="prescription-info">
+                <h3 class="prescription-id">Prescription #{{ prescription.id }}</h3>
+                <p class="prescription-date">{{ prescription.created_at|date:"F d, Y" }}</p>
+              </div>
+            </div>
+            <div class="prescription-status">
+              <span class="badge badge-success">Active</span>
+            </div>
+          </div>
+
+          {# Doctor/Patient Info #}
+          <div class="prescription-parties">
+            {% if user.is_patient %}
+              <div class="party-info">
+                <label>Prescribed by</label>
+                <div class="party-name">
+                  <span class="party-icon">👨‍⚕️</span>
+                  Dr. {{ prescription.doctor.user.get_full_name }}
+                </div>
+                <div class="party-specialty">{{ prescription.doctor.specialization }}</div>
+              </div>
+            {% elif user.is_doctor %}
+              <div class="party-info">
+                <label>Patient</label>
+                <div class="party-name">
+                  <span class="party-icon">👤</span>
+                  {{ prescription.patient.user.get_full_name }}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          {# Medications List #}
+          <div class="prescription-medications">
+            <label>Medications</label>
+            <ul class="medications-list">
+              {% for medication in prescription.medications.all %}
+                <li class="medication-item">
+                  <div class="medication-name">{{ medication.name }}</div>
+                  <div class="medication-details">
+                    {{ medication.dosage }} · {{ medication.frequency }} · {{ medication.duration }}
+                  </div>
+                </li>
+              {% empty %}
+                <li class="text-muted">No medications listed</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          {# Notes #}
+          {% if prescription.notes %}
+            <div class="prescription-notes">
+              <label>Notes</label>
+              <p>{{ prescription.notes|truncatewords:20 }}</p>
+            </div>
+          {% endif %}
+
+          {# Card Actions #}
+          <div class="prescription-actions">
+            <a href="{% url 'prescriptions:detail' prescription.id %}" class="btn btn-outline-primary btn-sm">
+              <span>👁️</span> View Details
+            </a>
+            <button class="btn btn-secondary btn-sm" onclick="downloadPrescription({{ prescription.id }})">
+              <span>⬇️</span> Download
+            </button>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">💊</div>
+        <h3>No Prescriptions Found</h3>
+        <p>{% if user.is_patient %}You don't have any prescriptions yet.{% else %}You haven't created any prescriptions yet.{% endif %}</p>
+        {% if user.is_doctor %}
+          <a href="{% url 'prescriptions:create' %}" class="btn btn-primary">
+            Create First Prescription
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {# Pagination #}
+  {% if prescriptions %}
+    {% include "includes/pagination.html" %}
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'prescriptions/js/prescriptions.js' %}"></script>
+{% endblock %}

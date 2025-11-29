@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ category }} Settings - Admin Panel{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{% static 'adminpanel/css/admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  {% include "adminpanel/includes/admin_sidebar.html" %}
+
+  <div class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>⚙️ {{ category }} Settings</h1>
+        <p class="admin-subtitle">Configure {{ category|lower }} settings</p>
+      </div>
+    </div>
+
+    <div class="config-grid">
+      {% for config in configurations %}
+        <div class="config-card" data-category="{{ config.category }}">
+          <div class="config-card-header">
+            <div>
+              <h4>{{ config.key }}</h4>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" {% if config.is_active %}checked{% endif %}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="config-card-body">
+            <p class="config-description">{{ config.description|default:"No description provided" }}</p>
+            <div class="config-value-row">
+              <div class="config-value-display">
+                <strong>Value:</strong> <code>{{ config.value }}</code>
+              </div>
+            </div>
+            <div class="config-meta">
+              <span class="config-meta-item"><strong>Type:</strong> {{ config.data_type }}</span>
+            </div>
+            <div class="config-actions">
+              <button class="btn btn-primary btn-sm">Edit</button>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty-state">
+          <h3>No {{ category|lower }} settings configured</h3>
+          <p>Add your first {{ category|lower }} setting to get started.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'adminpanel/js/admin.js' %}"></script>
+{% endblock %}

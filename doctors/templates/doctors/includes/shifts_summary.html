@@ -1,0 +1,26 @@
+<!--
+  File: doctors/templates/doctors/includes/shifts_summary.html
+  Purpose:
+    - Show on-call shifts and coverage KPIs for the doctor.
+  SOLID & Patterns:
+    - SRP: rendering only.
+    - State Pattern: presenters may attach a 'state' or 'status' to each shift for rendering badges.
+-->
+<section class="panel">
+  <header class="panel-header">
+    <h2 class="panel-title">Shifts & On-Call</h2>
+    <p class="panel-subtitle text-muted">Your upcoming shifts and coverage status</p>
+  </header>
+
+  <div class="panel-body">
+    {% if shifts %}
+      <div class="mini-grid">
+        {% for shift in shifts %}
+          {% include "components/mini_card.html" with item=shift title=shift.title subtitle=shift.subtitle image_url=shift.image_url badges=shift.badges kpis=shift.kpis href=shift.href url_name=shift.url_name url_arg=shift.url_arg aria_label=shift.aria_label target=shift.target %}
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "components/empty_state.html" with title="No upcoming shifts" message="You have no scheduled on-call shifts. Coordinate with your department to get assigned." icon="🕒" action_label="View schedule" url_name="shifts:list" %}
+    {% endif %}
+  </div>
+</section>

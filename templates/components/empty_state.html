@@ -1,40 +1,56 @@
-<!-- {#
+<!-- {# 
   Component: empty_state.html
   Purpose:
-    - Provide a consistent, friendly empty state with optional action.
-    - Reusable across dashboards and list pages.
+    - Reusable empty state with optional action.
+    - Defensive URL handling: avoid raising NoReverseMatch in templates.
   Expected context:
-    - title: short heading explaining the empty state (required)
-    - message: supportive copy (optional)
-    - icon: optional emoji/icon for visual emphasis
-    - action_label: text for the CTA button (optional)
-    - href OR url_name/url_arg: navigation target for the CTA (optional)
-    - aria_label: accessibility label for the CTA (optional; falls back to action_label or title)
-  Styling:
-    - Reuses card.css and interactions.css; apps may refine spacing locally.
+    - title (required)
+    - message (optional)
+    - icon (optional)
+    - action_label (optional)
+    - href OR url_name/url_arg (optional)
+    - aria_label (optional)
 #} -->
 
 <div class="empty-state" role="status" aria-live="polite">
   <div class="empty-state-body">
-    {% if icon %}<div class="empty-state-icon" aria-hidden="true">{{ icon }}</div>{% endif %}
+    {% if icon %}
+      <div class="empty-state-icon" aria-hidden="true">{{ icon }}</div>
+    {% endif %}
     <h3 class="empty-state-title">{{ title }}</h3>
-    {% if message %}<p class="empty-state-message text-muted">{{ message }}</p>{% endif %}
+    {% if message %}
+      <p class="empty-state-message text-muted">{{ message }}</p>
+    {% endif %}
   </div>
 
   {% if action_label %}
     <div class="empty-state-actions">
+      {# If an explicit href is provided by the view/presenter, use it (preferred). #}
       {% if href %}
         <a class="btn btn-primary"
            href="{{ href }}"
            aria-label="{{ aria_label|default:action_label }}">
           {{ action_label }}
         </a>
+
+      {# Otherwise, if a url_name is provided, attempt to resolve it safely into resolved_url.
+         Using "as resolved_url" prevents Django from raising NoReverseMatch here;
+         if resolution fails, resolved_url will be empty and we fall back to '#' (safe).
+      #}
       {% elif url_name %}
+        {# Resolve with optional argument; use the "as" form to avoid exceptions #}
+        {% if url_arg %}
+          {% url url_name url_arg as resolved_url %}
+        {% else %}
+          {% url url_name as resolved_url %}
+        {% endif %}
+
         <a class="btn btn-primary"
-           href="{% if url_arg %}{% url url_name url_arg %}{% else %}{% url url_name %}{% endif %}"
+           href="{{ resolved_url|default:'#' }}"
            aria-label="{{ aria_label|default:action_label }}">
           {{ action_label }}
         </a>
+
       {% endif %}
     </div>
   {% endif %}

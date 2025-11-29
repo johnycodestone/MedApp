@@ -30,21 +30,18 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home_view, name='home'),
 
-    # -------------------------------
-    # App routes (frontend + modules)
-    # -------------------------------
-    path('accounts/', include(('django.contrib.auth.urls', 'accounts'), namespace='accounts')),
-    path('doctors/', include(('doctors.urls', 'doctors'), namespace='doctors')),
-    # path('accounts/', include('accounts.urls')),  # intentionally commented in original
-    path('adminpanel/', include(('adminpanel.urls', 'adminpanel'), namespace='adminpanel')),
-    path('appointments/', include(('appointments.urls', 'appointments'), namespace='appointments')),
-    path('departments/', include(('departments.urls', 'departments'), namespace='departments')),
-    path('hospitals/', include(('hospitals.urls', 'hospitals'), namespace='hospitals')),
-    path('api/ml/', include(('mlmodule.urls', 'mlmodule'), namespace='mlmodule')),
-    path('patients/', include(('patients.urls', 'patients'), namespace='patients')),
-    path('prescriptions/', include(('prescriptions.urls', 'prescriptions'), namespace='prescriptions')),
-    path('reports/', include(('reports.urls', 'reports'), namespace='reports')),
-    path('schedules/', include(('schedules.urls', 'schedules'), namespace='schedules')),
+    # App routes (preserve existing order and names)
+    path('doctors/', include('doctors.urls')),
+     path('accounts/', include('accounts.urls')),  # intentionally commented in original
+    path('adminpanel/', include('adminpanel.urls')),
+    path('appointments/', include('appointments.urls')),
+    path('departments/', include('departments.urls')),
+    path('hospitals/', include('hospitals.urls')),
+    path('api/ml/', include('mlmodule.urls')),
+    path('patients/', include('patients.urls')),
+    path('prescriptions/', include('prescriptions.urls')),
+    path('reports/', include('reports.urls')),
+    path('schedules/', include('schedules.urls')),
 
     # -------------------------------
     # Utility + Staging

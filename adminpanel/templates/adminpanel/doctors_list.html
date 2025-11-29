@@ -1,0 +1,82 @@
+{%extends "base.html"%}
+{%load static%}
+
+{%block title%}Doctors Management - Admin Panel{%endblock%}
+
+{%block styles%}
+<link rel="stylesheet" href="{%static 'adminpanel/css/admin.css'%}">
+{%endblock%}
+
+{%block content%}
+<div class="admin-layout">
+  {%include "adminpanel/includes/admin_sidebar.html"%}
+
+  <div class="admin-main">
+    <div class="admin-header">
+      <div>
+        <h1>👨‍⚕️ Doctors Management</h1>
+        <p class="admin-subtitle">Manage all doctors in the system</p>
+      </div>
+    </div>
+
+    {% if doctors %}
+    <div class="stats-grid"><div class="stat-card stat-card-success"><div class="stat-icon">✅</div><div class="stat-content"><h3 class="stat-value">{{doctors.count}}</h3><p class="stat-label">Total Doctors</p></div></div></div>
+    {% endif %}
+
+    <div class="table-card">
+      <div class="table-header">
+        <h3>All Doctors</h3>
+        <div class="table-actions">
+          <input type="text" class="form-control" placeholder="Search..." style="width: 300px;">
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th><th>Doctor</th><th>Email</th><th>Specialization</th><th>License</th><th>Status</th><th>Joined</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {%for item in doctors%}
+              <tr>
+                <td>#{{item.id}}</td>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar-small">{{item.user.first_name|first|upper}}{{item.user.last_name|first|upper}}</div>
+                    <div>
+                      <div class="user-name">{{item.user.get_full_name}}</div>
+                      <div class="user-username">@{{item.user.username}}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>{{item.user.email}}</td>
+                <td><span class="badge badge-info">{{item.specialization|default:"N/A"}}</span></td>
+                <td>{{item.license_number|default:"N/A"}}</td>
+                <td><span class="badge badge-{%if item.user.is_active%}success{%else%}danger{%endif%}">{%if item.user.is_active%}Active{%else%}Inactive{%endif%}</span></td>
+                <td>{{item.user.created_at|date:"M d, Y"}}</td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn-icon" title="View">👁️</button>
+                    <button class="btn-icon" title="Edit">✏️</button>
+                    <button class="btn-icon" title="Delete">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            {%empty%}
+              <tr>
+                <td colspan="8" class="text-center">No doctors found</td>
+              </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{%endblock%}
+
+{%block scripts%}
+<script src="{%static 'adminpanel/js/admin.js'%}"></script>
+{%endblock%}

@@ -181,7 +181,7 @@ class LoginView(View):
 
 class LogoutView(LoginRequiredMixin, View):
     """
-    HTML logout view. Expects POST.
+    HTML logout view. Supports POST and GET (GET calls POST).
     """
     def post(self, request):
         try:
@@ -197,6 +197,10 @@ class LogoutView(LoginRequiredMixin, View):
         logout(request)
         messages.info(request, "You have been signed out.")
         return redirect(reverse("accounts:login"))
+
+    def get(self, request):
+        # Allow GET for convenience if your dropdown uses an anchor link
+        return self.post(request)
 
 
 class ProfileView(LoginRequiredMixin, View):
